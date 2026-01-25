@@ -46,7 +46,7 @@ Quái cơ bản, số lượng đông, áp sát người chơi.
 
 ### 🔵 Slime – Loại 2
 
-Phiên bản nâng cấp: nhanh hơn / nguy hiểm hơn.
+Phiên bản nâng cấp: bắn tầm xa/ nguy hiểm hơn.
 
 ![Slime 2](Slime2.png)
 
@@ -77,7 +77,7 @@ Sau mỗi mốc hoặc khi đạt đủ EXP, người chơi có thể chọn nâ
 * Kỹ năng đặc biệt
 
 ![Upgrade UI](UpgradeUI.png)
-
+* Hiện tại đã và đang triển khai 6 loại vũ khí
 ---
 
 ## 🛠️ Công nghệ sử dụng
