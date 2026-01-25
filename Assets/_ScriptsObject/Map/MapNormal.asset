@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 691142eb48a16fc4e86748241edbd555, type: 3}
+  m_Name: MapNormal
+  m_EditorClassIdentifier: Assembly-CSharp::MapData
+  mapKey: Grid_Normal
+  Map: {fileID: 4396500927713472968, guid: c48d239ec831f204b95c8de3dd5b0d41, type: 3}
+  obstacles:
+  - {fileID: 7407452222483125462, guid: 6e52a8159782d5c46a8e03d9f9561b55, type: 3}
+  - {fileID: 6685751938724071174, guid: 60ffcf91621ad2c4ab7914355f6ed3c9, type: 3}
+  - {fileID: 4494767529771794989, guid: a9a729e5654d26040a3b51d2d3eec6e0, type: 3}
+  spawnobstaclesPoints: []
+  mapRate: 0.98
