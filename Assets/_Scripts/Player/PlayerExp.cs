@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using static Player;
 
@@ -9,7 +10,7 @@ public class PlayerExp : MonoBehaviour
     [SerializeField] private int expToLevelUp = 5;
     [SerializeField] private int level = 1;
     [SerializeField] private Player Player;
-    public GameState OnStateGameUpgrade;
+    public event Action OnStateGameUpgrade;
     private void Awake()
     {
         if(Player == null)

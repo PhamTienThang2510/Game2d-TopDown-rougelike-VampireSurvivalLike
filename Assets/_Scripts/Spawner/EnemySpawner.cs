@@ -40,7 +40,7 @@ public class EnemySpawner : MonoBehaviour
     private float EventTimer = 0f;
     private float EventTimerTime = 0f;
     private bool isEventActive = false;
-    private PlayerController playerController;
+    private PlayerInput playerInput;
 
     [Header("Loop difficulty scaling (applied when all waves complete and we wrap)")]
     [Tooltip("When waves loop, this int multiplier is applied to spawned enemies' health. Default 2 => double.")]
@@ -60,7 +60,7 @@ public class EnemySpawner : MonoBehaviour
     private void Start()
     {
         if (player != null)
-            playerController = player.GetComponent<PlayerController>();
+            playerInput = player.GetComponent<PlayerInput>();
         UpdateBGM();
     }
 
@@ -113,7 +113,8 @@ public class EnemySpawner : MonoBehaviour
     }
     private void UpdateBGM()
     {
-        if (currentWaveIndex == waves.Length - 1)
+        int LastWaveIndex = waves.Length - 1;
+        if (currentWaveIndex == LastWaveIndex)
         {
             AudioManager.Instance.PlayBossBGM();
         }
@@ -217,9 +218,9 @@ public class EnemySpawner : MonoBehaviour
 
         float baseAngle = 0f;
 
-        if (spawnInFrontOfPlayer && playerController != null)
+        if (spawnInFrontOfPlayer && playerInput != null)
         {
-            Vector2 moveDir = playerController.PlayerDirection;
+            Vector2 moveDir = playerInput.PlayerDirection;
             if (moveDir != Vector2.zero)
                 baseAngle = Mathf.Atan2(moveDir.y, moveDir.x) * Mathf.Rad2Deg;
         }

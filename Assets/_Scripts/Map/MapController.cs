@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class MapController : MonoBehaviour
 {
@@ -12,10 +13,10 @@ public class MapController : MonoBehaviour
     [SerializeField] private float spawnDelay = 0.15f;
     [Header("PoolMap")]
     private Queue<GameObject> poolMap = new Queue<GameObject>();
-    private PlayerController playerController;
+    private PlayerInput playerInput;
     void Awake()
     {
-        playerController = Object.FindFirstObjectByType<PlayerController>();
+        playerInput = Object.FindFirstObjectByType<PlayerInput>();
     }
 
     void Start()
@@ -28,7 +29,7 @@ public class MapController : MonoBehaviour
         if (!currentMap) return;
         spawnCooldown -= Time.deltaTime;
         if (spawnCooldown > 0) return;
-        Vector2 dir = playerController.PlayerDirection;
+        Vector2 dir = playerInput.PlayerDirection;
         Transform target = null;
 
         if (dir.x > 0 && dir.y == 0) target = currentMap.transform.Find("Right");

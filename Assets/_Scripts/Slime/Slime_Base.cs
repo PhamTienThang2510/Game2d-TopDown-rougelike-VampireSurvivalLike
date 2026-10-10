@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 public class Slime_Base : MonoBehaviour
 {
+    protected SlimeMovementBase slimeMovement;
     [Header("Settings")]
     [SerializeField] protected EnemySO enemySO;
     [SerializeField] protected int Health;
@@ -10,7 +11,6 @@ public class Slime_Base : MonoBehaviour
     [Header("Damage Text Settings")]
     [SerializeField] protected Vector3 damageTextOffset = new Vector3(0, 0.5f, 0);
     [SerializeField] protected bool isDead;
-    [SerializeField] public SlimeMovementBase slimeMovement;
     [Header("Action")]
     public static Action<Vector2> OnSlimeDie;
     public static Action<int> OnSlimeHitPlayer;

@@ -3,7 +3,7 @@ using static CONSTANT;
 
 public class WhipController : WeaponController, IWeaponUI
 {
-    private PlayerController player;
+    private PlayerInput playerInput;
 
     [Header("Whip Settings")]
     [SerializeField] private LayerMask enemyLayer;
@@ -21,7 +21,7 @@ public class WhipController : WeaponController, IWeaponUI
 
     private void Start()
     {
-        player = GetComponentInParent<PlayerController>();
+        playerInput = GetComponentInParent<PlayerInput>();
     }
 
     void Update()
@@ -36,9 +36,9 @@ public class WhipController : WeaponController, IWeaponUI
 
     private void Shoot()
     {
-        if (player == null) return;
+        if (playerInput == null) return;
 
-        Vector2 dir = player.LastMoveDirection;
+        Vector2 dir = playerInput.LastMoveDirection;
         if (dir == Vector2.zero)
             dir = Vector2.right;
 
@@ -88,9 +88,9 @@ public class WhipController : WeaponController, IWeaponUI
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
-        if (player == null) return;
+        if (playerInput == null) return;
 
-        Vector2 dir = player.LastMoveDirection;
+        Vector2 dir = playerInput.LastMoveDirection;
         Vector2 center = (Vector2)spawnHolder.transform.position + dir.normalized * hitOffset;
 
         Gizmos.color = Color.red;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class KnifeWeaponController : WeaponController, IWeaponUI
 {
-    private PlayerController player;
+    private PlayerInput playerInput;
     private float timer;
     private void Awake()
     {
@@ -12,7 +12,7 @@ public class KnifeWeaponController : WeaponController, IWeaponUI
     }
     private void Start()
     {
-        player = FindFirstObjectByType<PlayerController>();
+        playerInput = FindFirstObjectByType<PlayerInput>();
     }
 
     void Update()
@@ -28,7 +28,7 @@ public class KnifeWeaponController : WeaponController, IWeaponUI
 
     private void Shoot()
     {
-        Vector2 dir = player.LastMoveDirection;
+        Vector2 dir = playerInput.LastMoveDirection;
         if (dir.sqrMagnitude < 0.01f) dir = Vector2.right;
 
         GameObject proj = PoolManager.Instance.Spawn(weaponData.projectileKey, spawnHolder.position);

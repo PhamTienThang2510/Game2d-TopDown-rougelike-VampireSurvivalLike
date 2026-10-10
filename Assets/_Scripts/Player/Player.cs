@@ -7,8 +7,7 @@ using UnityEngine.UI;
 
 public class Player : MonoBehaviour, IDamageable
 {
-    public delegate void GameState();
-    public GameState OnStateGameOver;
+    public event Action OnStateGameOver;
     [Header("Components")]
     [SerializeField] private PlayerController controller;
     [Header("Health Settings")]
@@ -45,11 +44,6 @@ public class Player : MonoBehaviour, IDamageable
     private void PlayerDie()
     {
         controller.PlayerDeath();
-
-        // tắt di chuyển
-        controller.enabled = false;
-        float timewait = 2f;
-        Destroy(this.gameObject, timewait);
         OnStateGameOver?.Invoke();
     }
 
