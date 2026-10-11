@@ -4,25 +4,25 @@ public class PlayerAnimation : MonoBehaviour
 {
     [Header("Player Animator")]
     [SerializeField] public Animator Animator;
-    [SerializeField] public PlayerController playerController;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void OnEnable()
     {
-        playerController = this.GetComponent<PlayerController>();
-        playerController.OnPlayerWalk += HandlePlayerWalk;
-        playerController.OnPlayerIdle += HandlePlayerIdle;
-        playerController.OnPlayerDeath += HandlePlayerDeath;
+        EventBus<OnPlayerMovementStateEvent>.Subscribe(HandleMovementState);
+        EventBus<OnPlayerDeathEvent>.Subscribe(HandlePlayerDeath);
     }
-    private void HandlePlayerWalk()
+
+    private void OnDisable()
     {
-        Animator.SetBool("IsWalk", true);
+        EventBus<OnPlayerMovementStateEvent>.Unsubscribe(HandleMovementState);
+        EventBus<OnPlayerDeathEvent>.Unsubscribe(HandlePlayerDeath);
     }
-    private void HandlePlayerIdle()
+
+    private void HandleMovementState(OnPlayerMovementStateEvent evt)
     {
-        Animator.SetBool("IsWalk", false);
+        Animator.SetBool("IsWalk", evt.IsWalking);
     }
-    private void HandlePlayerDeath()
+
+    private void HandlePlayerDeath(OnPlayerDeathEvent _)
     {
         Animator.SetBool("IsDeath", true);
     }

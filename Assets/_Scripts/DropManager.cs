@@ -8,17 +8,17 @@ public class DropManager : MonoBehaviour
 
     private void OnEnable()
     {
-        Slime.OnSlimeDie += SpawnDrop;
+        EventBus<OnEnemyKilledEvent>.Subscribe(OnEnemyKilled);
     }
 
     private void OnDisable()
     {
-        Slime.OnSlimeDie -= SpawnDrop;
+        EventBus<OnEnemyKilledEvent>.Unsubscribe(OnEnemyKilled);
     }
 
-    private void SpawnDrop(Vector2 enemyPos)
+    private void OnEnemyKilled(OnEnemyKilledEvent evt)
     {
-        Vector3 spawnPos = enemyPos + Vector2.up * offsetY;
+        Vector3 spawnPos = evt.Position + Vector2.up * offsetY;
         PoolManager.Instance.Spawn(CONSTANT.Gem_exp, spawnPos);
     }
 }

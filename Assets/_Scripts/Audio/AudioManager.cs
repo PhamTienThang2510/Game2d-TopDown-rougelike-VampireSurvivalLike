@@ -5,6 +5,7 @@ public class AudioManager : MonoBehaviour
     public static AudioManager Instance { get; private set; }
     public AudioSource audioPlaynormal;
     public AudioSource audioPlayBoss;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -17,6 +18,25 @@ public class AudioManager : MonoBehaviour
             DontDestroyOnLoad(this.gameObject);
         }
     }
+
+    private void OnEnable()
+    {
+        EventBus<OnWaveChangedEvent>.Subscribe(OnWaveChanged);
+    }
+
+    private void OnDisable()
+    {
+        EventBus<OnWaveChangedEvent>.Unsubscribe(OnWaveChanged);
+    }
+
+    private void OnWaveChanged(OnWaveChangedEvent evt)
+    {
+        if (evt.IsBossWave)
+            PlayBossBGM();
+        else
+            PlayNormalBGM();
+    }
+
     public void PlayNormalBGM()
     {
         audioPlayBoss.Stop();
@@ -25,6 +45,7 @@ public class AudioManager : MonoBehaviour
             audioPlaynormal.Play();
         }
     }
+
     public void PlayBossBGM()
     {
         audioPlaynormal.Stop();

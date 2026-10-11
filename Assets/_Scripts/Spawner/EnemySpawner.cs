@@ -113,15 +113,10 @@ public class EnemySpawner : MonoBehaviour
     }
     private void UpdateBGM()
     {
-        int LastWaveIndex = waves.Length - 1;
-        if (currentWaveIndex == LastWaveIndex)
-        {
-            AudioManager.Instance.PlayBossBGM();
-        }
-        else
-        {
-            AudioManager.Instance.PlayNormalBGM();
-        }
+        if (waves == null || waves.Length == 0) return;
+        int lastWaveIndex = waves.Length - 1;
+        bool isBossWave = currentWaveIndex == lastWaveIndex;
+        EventBus<OnWaveChangedEvent>.Publish(new OnWaveChangedEvent(currentWaveIndex, isBossWave));
     }
 
     // =========================
@@ -199,7 +194,7 @@ public class EnemySpawner : MonoBehaviour
 
         // Use Slime.UpgradeDataSlime to apply integer multipliers when spawning.
         // This ensures the spawned Slime's MaxHealth and Damage are multiplied accordingly.
-        var slime = go.GetComponent<Slime>();
+        var slime = go.GetComponent<Slime_Base>();
         if (slime != null)
         {
             if (currentHealthMultiplier > 1 || currentDamageMultiplier > 1)

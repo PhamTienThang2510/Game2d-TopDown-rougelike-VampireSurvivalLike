@@ -44,10 +44,24 @@ public class UIManager : MonoBehaviour
         panelUpgrade.SetActive(false);
     }
 
+    private void OnEnable()
+    {
+        EventBus<OnGameOverEvent>.Subscribe(OnGameOver);
+        EventBus<OnLevelUpEvent>.Subscribe(OnLevelUp);
+        EventBus<OnHealthChangedEvent>.Subscribe(OnHealthChanged);
+        EventBus<OnExpChangedEvent>.Subscribe(OnExpChanged);
+    }
+
+    private void OnDisable()
+    {
+        EventBus<OnGameOverEvent>.Unsubscribe(OnGameOver);
+        EventBus<OnLevelUpEvent>.Unsubscribe(OnLevelUp);
+        EventBus<OnHealthChangedEvent>.Unsubscribe(OnHealthChanged);
+        EventBus<OnExpChangedEvent>.Unsubscribe(OnExpChanged);
+    }
+
     private void Start()
     {
-        player.OnStateGameOver += ShowGameOverPanel;
-        playerExp.OnStateGameUpgrade += Upgrade;
         LoadCurrentWeapon();
 
         // Nếu bắt đầu mà chưa có vũ khí nào, mở giao diện pick (tạm dừng game) để người chơi chọn vũ khí khởi đầu
@@ -89,6 +103,11 @@ public class UIManager : MonoBehaviour
     }
 
     // ================= HEALTH =================
+    private void OnHealthChanged(OnHealthChangedEvent evt)
+    {
+        SettingHealthUI(evt.CurrentHealth, evt.MaxHealth);
+    }
+
     public void SettingHealthUI(int current, int max)
     {
         sliderHealth.value = current * 1f / max;
@@ -96,6 +115,11 @@ public class UIManager : MonoBehaviour
     }
 
     // ================= EXP =================
+    private void OnExpChanged(OnExpChangedEvent evt)
+    {
+        SettingExpUI(evt.CurrentExp, evt.ExpToLevelUp);
+    }
+
     public void SettingExpUI(int current, int max)
     {
         sliderExp.value = current * 1f / max;
@@ -103,6 +127,16 @@ public class UIManager : MonoBehaviour
     }
 
     // ================= GAME OVER =================
+    private void OnGameOver(OnGameOverEvent _)
+    {
+        ShowGameOverPanel();
+    }
+
+    private void OnLevelUp(OnLevelUpEvent _)
+    {
+        Upgrade();
+    }
+
     private void ShowGameOverPanel()
     {
         panelGameOver.SetActive(true);

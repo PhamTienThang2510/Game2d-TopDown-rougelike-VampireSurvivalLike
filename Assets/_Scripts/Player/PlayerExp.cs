@@ -1,7 +1,4 @@
-using System;
 using UnityEngine;
-using static Player;
-
 
 public class PlayerExp : MonoBehaviour
 {
@@ -10,7 +7,7 @@ public class PlayerExp : MonoBehaviour
     [SerializeField] private int expToLevelUp = 5;
     [SerializeField] private int level = 1;
     [SerializeField] private Player Player;
-    public event Action OnStateGameUpgrade;
+
     private void Awake()
     {
         if(Player == null)
@@ -19,7 +16,7 @@ public class PlayerExp : MonoBehaviour
     private void Start()
     {
         // init UI
-        UIManager.instance.SettingExpUI(currentExp, expToLevelUp);
+        EventBus<OnExpChangedEvent>.Publish(new OnExpChangedEvent(currentExp, expToLevelUp, level));
     }
 
     public void AddExp(int value)
@@ -31,14 +28,14 @@ public class PlayerExp : MonoBehaviour
             LevelUp();
         }
 
-        UIManager.instance.SettingExpUI(currentExp, expToLevelUp);
+        EventBus<OnExpChangedEvent>.Publish(new OnExpChangedEvent(currentExp, expToLevelUp, level));
     }
     public void LevelUpByTreasure()
     {
         Time.timeScale = 0f;
         Player.Heal(100); // hồi máu khi lên cấp
-        OnStateGameUpgrade?.Invoke();
-        UIManager.instance.SettingExpUI(currentExp, expToLevelUp);
+        EventBus<OnLevelUpEvent>.Publish();
+        EventBus<OnExpChangedEvent>.Publish(new OnExpChangedEvent(currentExp, expToLevelUp, level));
     }
     private void LevelUp()
     {
@@ -48,6 +45,6 @@ public class PlayerExp : MonoBehaviour
         Player.Heal(100); // hồi máu khi lên cấp
         Debug.Log("LEVEL UP! " + level);
         Time.timeScale = 0f;
-        OnStateGameUpgrade?.Invoke();
+        EventBus<OnLevelUpEvent>.Publish();
     }
 }

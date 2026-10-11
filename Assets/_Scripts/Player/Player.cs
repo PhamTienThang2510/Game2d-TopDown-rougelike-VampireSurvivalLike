@@ -7,7 +7,6 @@ using UnityEngine.UI;
 
 public class Player : MonoBehaviour, IDamageable
 {
-    public event Action OnStateGameOver;
     [Header("Components")]
     [SerializeField] private PlayerController controller;
     [Header("Health Settings")]
@@ -25,13 +24,13 @@ public class Player : MonoBehaviour, IDamageable
     void Start()
     {
         controller = GetComponent<PlayerController>();
-        UIManager.instance.SettingHealthUI(Health, MaxHealth);
+        EventBus<OnHealthChangedEvent>.Publish(new OnHealthChangedEvent(Health, MaxHealth));
     }
 
     public void TakeDamage(int dame)
     {
         this.Health -= dame;
-        UIManager.instance.SettingHealthUI(Health, MaxHealth);
+        EventBus<OnHealthChangedEvent>.Publish(new OnHealthChangedEvent(Health, MaxHealth));
         if (Health <= 0) PlayerDie();
     }
     public void Heal(int amount)
@@ -39,12 +38,12 @@ public class Player : MonoBehaviour, IDamageable
         this.Health += amount;
         if (this.Health > MaxHealth)
             this.Health = MaxHealth;
-        UIManager.instance.SettingHealthUI(Health, MaxHealth);
+        EventBus<OnHealthChangedEvent>.Publish(new OnHealthChangedEvent(Health, MaxHealth));
     }
     private void PlayerDie()
     {
         controller.PlayerDeath();
-        OnStateGameOver?.Invoke();
+        EventBus<OnGameOverEvent>.Publish();
     }
 
     private void OnCollisionStay2D(Collision2D collision)

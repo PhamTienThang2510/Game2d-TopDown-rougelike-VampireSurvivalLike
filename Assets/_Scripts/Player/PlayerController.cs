@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -6,9 +5,6 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     private PlayerInput playerInput;
-    public event Action OnPlayerWalk;
-    public event Action OnPlayerDeath;
-    public event Action OnPlayerIdle;
     private bool isWalking = false;
 
     [Header("Player Rigidbody2D")]
@@ -31,22 +27,15 @@ public class PlayerController : MonoBehaviour
         if (isCurrentlyWalking != isWalking)
         {
             isWalking = isCurrentlyWalking;
-            if (isWalking)
-            {
-                OnPlayerWalk?.Invoke();
-            }
-            else
-            {
-                OnPlayerIdle?.Invoke();
-            }
+            EventBus<OnPlayerMovementStateEvent>.Publish(new OnPlayerMovementStateEvent(isWalking));
         }
 
         if (playerInput.PlayerDirection.x > 0.01f)
             transform.localScale = new Vector3(1f, 1f, 1f);   // facing right
         else if (playerInput.PlayerDirection.x < -0.01f)
             transform.localScale = new Vector3(-1f, 1f, 1f);  // facing left
-
     }
+
     private void FixedUpdate()
     {
         if (rb != null && playerInput != null)
@@ -55,7 +44,7 @@ public class PlayerController : MonoBehaviour
 
     public void PlayerDeath()
     {
-        OnPlayerDeath?.Invoke();
+        EventBus<OnPlayerDeathEvent>.Publish();
         this.enabled = false;
         float timewait = 2f;
         Destroy(this.gameObject, timewait);
