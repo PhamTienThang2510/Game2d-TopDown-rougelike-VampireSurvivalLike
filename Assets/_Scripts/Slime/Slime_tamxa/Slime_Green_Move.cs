@@ -112,17 +112,11 @@ public class Slime_Green_Move : SlimeMovementBase
             return;
         }
 
-        // Player is farther than upper -> move to re-establish keepDistance
+        // Player is farther than upper -> move using FlowField to approach around obstacles
         isMoving = true;
 
-        Vector2 dir = toTargetRealtime.normalized;
-        Vector2 targetPos = (Vector2)target.position - dir * keepDistance;
-
-        Vector2 newPos = Vector2.MoveTowards(
-            rb.position,
-            targetPos,
-            moveSpeed * Time.fixedDeltaTime
-        );
+        Vector2 flowDir = GetFlowMoveDirection(rb.position);
+        Vector2 newPos = rb.position + flowDir * (moveSpeed * Time.fixedDeltaTime);
 
         rb.MovePosition(newPos);
         HandleFlipAndAttackPoint();

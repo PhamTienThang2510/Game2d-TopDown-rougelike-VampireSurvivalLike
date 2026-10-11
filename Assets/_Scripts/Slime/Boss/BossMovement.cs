@@ -223,9 +223,10 @@ public class BossMovement : SlimeMovementBase
 
     void MoveToPlayer(float speed)
     {
-        Vector2 dir = ((Vector2)target.position - rb.position).normalized;
+        Vector2 dir = GetFlowMoveDirection(rb.position);
         rb.MovePosition(rb.position + dir * speed * Time.fixedDeltaTime);
-        spriteRenderer.flipX = dir.x < 0;
+        if (Mathf.Abs(dir.x) > 0.001f && spriteRenderer != null)
+            spriteRenderer.flipX = dir.x < 0;
     }
 
     void SpawnCircleBullets()

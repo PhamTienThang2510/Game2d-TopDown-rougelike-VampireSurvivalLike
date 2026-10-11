@@ -26,7 +26,7 @@ public class SlimeMovement : SlimeMovementBase
     private void SlimeMove()
     {
         if (target == null) return;
-        moveDir = (target.position - transform.position).normalized;
+        moveDir = GetFlowMoveDirection(rb.position);
 
         rb.MovePosition(rb.position + moveDir * moveSpeed * Time.fixedDeltaTime);
 
