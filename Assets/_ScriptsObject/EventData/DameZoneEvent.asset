@@ -12,7 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e50018e33f6bf445b6b1c2c5dae2fbc, type: 3}
   m_Name: DameZoneEvent
   m_EditorClassIdentifier: Assembly-CSharp::EventData
-  eventName: DameZoneEvent
+  eventName: EliteHunterEvent
+  eventType: 2
+  prefabkey: Elite
   prefabs: {fileID: 0}
-  eventDuration: 60
-  probability: 20
+  spawnCount: 1
+  eventDuration: 45
+  probability: 25
+  spawnRadius: 8
+  stampedeSpeedMultiplier: 1.2

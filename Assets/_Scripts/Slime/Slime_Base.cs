@@ -14,6 +14,8 @@ public class Slime_Base : MonoBehaviour, IDamageable, IDameSource
     [SerializeField] protected Vector3 damageTextOffset = new Vector3(0, 0.5f, 0);
     [SerializeField] protected bool isDead;
 
+    public bool IsElite { get; set; }
+
     protected virtual void Awake()
     {
         slimeAnim = GetComponent<SlimeAnimation>();
@@ -29,6 +31,7 @@ public class Slime_Base : MonoBehaviour, IDamageable, IDameSource
     protected virtual void OnEnable()
     {
         isDead = false;
+        IsElite = gameObject.name.Contains("Elite") || this is Boss;
         if (enemySO != null)
         {
             this.MaxHealth = enemySO.MaxHealth;
@@ -70,7 +73,7 @@ public class Slime_Base : MonoBehaviour, IDamageable, IDameSource
         Vector3 pos = transform.position + new Vector3(0, 0.5f, 0);
 
         PoolManager.Instance.Spawn(CONSTANT.Fx_Damage_Die, pos);
-        EventBus<OnEnemyKilledEvent>.Publish(new OnEnemyKilledEvent(transform.position));
+        EventBus<OnEnemyKilledEvent>.Publish(new OnEnemyKilledEvent(transform.position, IsElite));
         slimeAnim?.PlayDeathFade(() =>
         {
             PoolManager.Instance.Despawn(this.transform.name, gameObject);
@@ -87,6 +90,6 @@ public class Slime_Base : MonoBehaviour, IDamageable, IDameSource
     protected virtual void OnDisable()
     {
         if (EnemySpawner.Instance != null)
-            EnemySpawner.Instance.UnregisterEnemy();
+            EnemySpawner.Instance.UnregisterEnemy(this);
     }
 }

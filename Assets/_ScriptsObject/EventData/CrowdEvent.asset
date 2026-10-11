@@ -13,6 +13,11 @@ MonoBehaviour:
   m_Name: CrowdEvent
   m_EditorClassIdentifier: Assembly-CSharp::EventData
   eventName: CrowdEvent
+  eventType: 1
+  prefabkey: Slime_water
   prefabs: {fileID: 0}
-  eventDuration: 30
+  spawnCount: 20
+  eventDuration: 15
   probability: 40
+  spawnRadius: 9
+  stampedeSpeedMultiplier: 1.8

@@ -28,7 +28,7 @@ public class SlimeMovement : SlimeMovementBase
         if (target == null) return;
         moveDir = GetFlowMoveDirection(rb.position);
 
-        rb.MovePosition(rb.position + moveDir * moveSpeed * Time.fixedDeltaTime);
+        rb.MovePosition(rb.position + moveDir * EffectiveMoveSpeed * Time.fixedDeltaTime);
 
         if (Mathf.Abs(moveDir.x) > 0.001f && spriteRenderer != null)
             spriteRenderer.flipX = moveDir.x < 0;

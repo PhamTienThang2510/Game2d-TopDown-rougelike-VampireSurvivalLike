@@ -47,10 +47,12 @@ public struct OnPlayerMovementStateEvent : IEvent
 public struct OnEnemyKilledEvent : IEvent
 {
     public Vector2 Position;
+    public bool DropTreasure;
 
-    public OnEnemyKilledEvent(Vector2 position)
+    public OnEnemyKilledEvent(Vector2 position, bool dropTreasure = false)
     {
         Position = position;
+        DropTreasure = dropTreasure;
     }
 }
 
@@ -63,5 +65,17 @@ public struct OnWaveChangedEvent : IEvent
     {
         WaveIndex = waveIndex;
         IsBossWave = isBossWave;
+    }
+}
+
+public struct OnSpecialEventTriggered : IEvent
+{
+    public string EventName;
+    public SpecialEventType EventType;
+
+    public OnSpecialEventTriggered(string eventName, SpecialEventType eventType)
+    {
+        EventName = eventName;
+        EventType = eventType;
     }
 }

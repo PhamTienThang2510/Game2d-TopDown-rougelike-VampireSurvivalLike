@@ -15,5 +15,5 @@ MonoBehaviour:
   projectileKey: shield
   projectileSpeed: 0
   weaponSprite: {fileID: 5884729434613562154, guid: 02947cd75ae22f14d87b3624a33ff3a8, type: 3}
-  damage: 1
+  damage: 2
   cooldown: 2
