@@ -301,10 +301,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WhipController
   weaponData: {fileID: 11400000, guid: ef2e966567f917f429e6846a054ad69d, type: 2}
+  spawnHolder: {fileID: 728039910}
   dame: 0
   speed: 0
   cooldown: 0
-  spawnHolder: {fileID: 728039910}
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
@@ -453,7 +453,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DropManager
   dropPrefab: {fileID: 2027883485773292289, guid: 0b96026e60c5f48459098468de8bfbca, type: 3}
-  treasurePrefab: {fileID: 0}
+  treasurePrefab: {fileID: 355453645813262993, guid: c0737bea4902ace438dc7297bd78fe68, type: 3}
   offsetY: 0.3
 --- !u!4 &105495345
 Transform:
@@ -1727,10 +1727,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KnifeWeaponController
   weaponData: {fileID: 11400000, guid: 545c16722ee2f8f43addf5b7a5632ce8, type: 2}
+  spawnHolder: {fileID: 728039910}
   dame: 0
   speed: 0
   cooldown: 0
-  spawnHolder: {fileID: 728039910}
 --- !u!1 &404515402
 GameObject:
   m_ObjectHideFlags: 0
@@ -2597,15 +2597,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LightningController
   weaponData: {fileID: 11400000, guid: 2adadfc8d4082324aa22cf75ca342baa, type: 2}
+  spawnHolder: {fileID: 728039910}
   dame: 0
   speed: 0
   cooldown: 0
-  spawnHolder: {fileID: 728039910}
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
   searchRadius: 4.5
-  maxChain: 1
+  baseMaxChain: 3
 --- !u!1 &919528588
 GameObject:
   m_ObjectHideFlags: 0
@@ -2788,11 +2788,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MagicOrbWeapon
   weaponData: {fileID: 11400000, guid: 080b8b73f3db7e843a6b7ff6dbc0d8d9, type: 2}
+  spawnHolder: {fileID: 728039910}
   dame: 0
   speed: 0
   cooldown: 0
-  spawnHolder: {fileID: 728039910}
-  range: 5
+  baseRange: 6
 --- !u!1 &1023291104
 GameObject:
   m_ObjectHideFlags: 0
@@ -3825,10 +3825,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AxeWeaponController
   weaponData: {fileID: 11400000, guid: 6d928d4b9e2d3294b8c3d7c2dfdf9ffb, type: 2}
+  spawnHolder: {fileID: 728039910}
   dame: 0
   speed: 0
   cooldown: 0
-  spawnHolder: {fileID: 728039910}
 --- !u!1 &1795468990
 GameObject:
   m_ObjectHideFlags: 0
@@ -4203,13 +4203,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShieldWeaponController
   weaponData: {fileID: 11400000, guid: 48d53db8da766d64c81760483ad7790d, type: 2}
+  spawnHolder: {fileID: 728039910}
   dame: 0
   speed: 0
   cooldown: 0
-  spawnHolder: {fileID: 728039910}
   shieldPrefab: {fileID: 399811182098008250, guid: 02947cd75ae22f14d87b3624a33ff3a8, type: 3}
-  shieldDuration: 2
-  damageInterval: 0.5
+  baseDamageInterval: 0.5
 --- !u!1 &2075089995
 GameObject:
   m_ObjectHideFlags: 0
