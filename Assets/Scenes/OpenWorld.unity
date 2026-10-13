@@ -214,6 +214,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -452,6 +453,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DropManager
   dropPrefab: {fileID: 2027883485773292289, guid: 0b96026e60c5f48459098468de8bfbca, type: 3}
+  treasurePrefab: {fileID: 0}
   offsetY: 0.3
 --- !u!4 &105495345
 Transform:
@@ -704,6 +706,7 @@ GameObject:
   - component: {fileID: 169846177}
   - component: {fileID: 169846176}
   - component: {fileID: 169846173}
+  - component: {fileID: 169846181}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -758,7 +761,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Player
   controller: {fileID: 169846175}
   Health: 0
-  MaxHealth: 50
+  MaxHealth: 1000000000
   damageDelay: 1.5
   IsDead: 0
 --- !u!114 &169846175
@@ -775,8 +778,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   rb: {fileID: 0}
   MoveSpeed: 2.5
-  PlayerDirection: {x: 0, y: 0}
-  LastMoveDirection: {x: 0, y: 1}
 --- !u!70 &169846176
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -865,6 +866,7 @@ Animator:
   m_WriteDefaultValuesOnDisable: 0
 --- !u!212 &169846179
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -910,6 +912,7 @@ SpriteRenderer:
   m_SortingLayerID: 424902425
   m_SortingLayer: 2
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 462434960, guid: 90c7332c857b6b043bad30766e14a946, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -919,7 +922,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &169846180
 MonoBehaviour:
@@ -934,7 +936,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimation
   Animator: {fileID: 169846178}
-  playerController: {fileID: 169846175}
+--- !u!114 &169846181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 169846171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09572f7d97ed794449aca541426b0c0e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInput
+  PlayerDirection: {x: 0, y: 0}
+  LastMoveDirection: {x: 1, y: 0}
+  UpKey: 119
+  DownKey: 115
+  LeftKey: 97
+  RightKey: 100
 --- !u!1001 &198128095
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1882,6 +1901,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2056,6 +2076,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2166,6 +2187,7 @@ MonoBehaviour:
   eventDatas:
   - {fileID: 11400000, guid: c4db0cc9c8d011546ba93a4505899cce, type: 2}
   eventInterval: 90
+  eliteSpawnInterval: 75
   eventTimer: 0
 --- !u!4 &818992077
 Transform:
@@ -2258,6 +2280,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2659,6 +2682,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -3624,6 +3648,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1588676571
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -3669,6 +3694,7 @@ SpriteRenderer:
   m_SortingLayerID: 424902425
   m_SortingLayer: 2
   m_SortingOrder: -1
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -4756028443593143600, guid: e635deba25157514b9abaaef5462c8e3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -3678,7 +3704,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!1 &1638777197
 GameObject:
@@ -4409,6 +4434,11 @@ MonoBehaviour:
   spawnRadius: 10
   arcAngle: 120
   spawnInFrontOfPlayer: 1
+  waveDuration: 60
+  minEnemiesOnScreen: 10
+  quotaRefillInterval: 0.25
+  maxEnemyDistance: 18
+  wrapCheckInterval: 0.5
   waves:
   - waveName: Wave_1
     segments:

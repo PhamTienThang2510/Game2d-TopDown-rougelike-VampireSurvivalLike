@@ -3,95 +3,85 @@ using static CONSTANT;
 
 public class WhipController : WeaponController, IWeaponUI
 {
-    private PlayerInput playerInput;
-
     [Header("Whip Settings")]
     [SerializeField] private LayerMask enemyLayer;
     [SerializeField] private Vector2 hitBoxSize = new(3f, 1.5f);
     [SerializeField] private float hitOffset = 1.7f;
 
-    private float timer;
-
-    private void Awake()
+    protected override void Attack()
     {
-        dame = weaponData.damage;
-        speed = weaponData.projectileSpeed;
-        cooldown = weaponData.cooldown;
-    }
+        Vector2 forwardDir = GetAimDirection();
 
-    private void Start()
-    {
-        playerInput = GetComponentInParent<PlayerInput>();
-    }
+        // 1. Quất đòn phía trước
+        PerformWhipSlash(forwardDir);
 
-    void Update()
-    {
-        timer += Time.deltaTime;
-        if (timer >= cooldown)
+        // 2. Nếu có từ 2 đòn trở lên: Quất thêm đòn bọc hậu phía sau lưng!
+        if (GetFinalProjectileCount() >= 2)
         {
-            timer = 0f;
-            Shoot();
+            PerformWhipSlash(-forwardDir);
         }
     }
 
-    private void Shoot()
+    private void PerformWhipSlash(Vector2 dir)
     {
-        if (playerInput == null) return;
-
-        Vector2 dir = playerInput.LastMoveDirection;
-        if (dir == Vector2.zero)
-            dir = Vector2.right;
-
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-
-        Vector2 center = (Vector2)spawnHolder.transform.position + dir.normalized * hitOffset;
+        float scaledOffset = hitOffset * GetFinalAreaScale();
+        Vector2 center = (Vector2)spawnHolder.position + dir.normalized * scaledOffset;
+        Vector2 scaledBox = hitBoxSize * GetFinalAreaScale();
 
         Collider2D[] hitEnemies = Physics2D.OverlapBoxAll(
             center,
-            hitBoxSize,
+            scaledBox,
             angle,
             enemyLayer
         );
 
+        int damage = GetFinalDamage();
         foreach (var hit in hitEnemies)
         {
-            if (hit.TryGetComponent(out IDamageable enemy))
+            if (hit != null && hit.TryGetComponent(out IDamageable enemy))
             {
-                enemy.TakeDamage(dame);
+                enemy.TakeDamage(damage);
             }
         }
 
-        // Visual (optional)
         SpawnWhipFX(center, angle);
     }
 
     private void SpawnWhipFX(Vector2 pos, float angle)
     {
-        GameObject fx = PoolManager.Instance.Spawn("WhipSlash", pos);
-        if (fx != null)
+        if (PoolManager.Instance != null && PoolManager.Instance.HasKey("WhipSlash"))
         {
-            fx.transform.rotation = Quaternion.Euler(0, 0, angle);
+            GameObject fx = PoolManager.Instance.Spawn("WhipSlash", pos);
+            if (fx != null)
+            {
+                fx.transform.rotation = Quaternion.Euler(0, 0, angle);
+                fx.transform.localScale = Vector3.one * GetFinalAreaScale();
+            }
         }
     }
 
-    // ================= UI =================
+    // ================= TƯƠNG THÍCH NGƯỢC IWeaponUI =================
     public SpriteRenderer GetIcon()
     {
-        return weaponData.weaponSprite;
+        return weaponData != null ? weaponData.weaponSprite : null;
     }
 
     public void UpdateWeaponData(int addDame)
     {
-        dame += addDame;
+        UpgradeWeapon();
     }
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
-        if (playerInput == null) return;
+        Vector2 dir = (playerInput != null && playerInput.LastMoveDirection.sqrMagnitude > 0.001f)
+            ? playerInput.LastMoveDirection.normalized
+            : Vector2.right;
 
-        Vector2 dir = playerInput.LastMoveDirection;
-        Vector2 center = (Vector2)spawnHolder.transform.position + dir.normalized * hitOffset;
+        Transform holder = spawnHolder != null ? spawnHolder : transform;
+        Vector2 center = (Vector2)holder.position + dir * hitOffset * GetFinalAreaScale();
+        Vector2 scaledBox = hitBoxSize * GetFinalAreaScale();
 
         Gizmos.color = Color.red;
         Gizmos.matrix = Matrix4x4.TRS(
@@ -99,7 +89,7 @@ public class WhipController : WeaponController, IWeaponUI
             Quaternion.Euler(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg),
             Vector3.one
         );
-        Gizmos.DrawWireCube(Vector3.zero, hitBoxSize);
+        Gizmos.DrawWireCube(Vector3.zero, scaledBox);
     }
 #endif
 }

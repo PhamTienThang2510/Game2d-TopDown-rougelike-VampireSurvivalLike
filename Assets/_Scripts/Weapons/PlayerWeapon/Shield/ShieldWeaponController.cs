@@ -3,54 +3,63 @@ using UnityEngine;
 public class ShieldWeaponController : WeaponController, IWeaponUI
 {
     [SerializeField] private GameObject shieldPrefab;
-    [SerializeField] private float shieldDuration = 1.0f;
-    [SerializeField] private float damageInterval = 0.5f;
+    [SerializeField] private float baseDamageInterval = 0.5f;
 
     private GameObject shieldInstance;
     private ShieldAreaDamage areaDamage;
-
-    private float timer;
     private bool shieldActive;
 
-    private void Awake()
+    protected override bool AutoAttackEnabled => false;
+
+    protected override void Start()
     {
-        dame = weaponData.damage;
-        speed = weaponData.projectileSpeed;
-        cooldown = weaponData.cooldown;
+        base.Start();
+
+        if (shieldPrefab != null)
+        {
+            shieldInstance = Instantiate(shieldPrefab, spawnHolder.position, Quaternion.identity);
+            shieldInstance.transform.SetParent(spawnHolder);
+            shieldInstance.SetActive(false);
+
+            areaDamage = shieldInstance.AddComponent<ShieldAreaDamage>();
+            areaDamage.Initialize(GetFinalDamage(), baseDamageInterval);
+
+            UpdateShieldVisual();
+        }
     }
 
-    private void Start()
+    protected override void Update()
     {
-        shieldInstance = Instantiate(shieldPrefab, spawnHolder.position, Quaternion.identity);
-        shieldInstance.SetActive(false);
+        if (shieldInstance == null) return;
 
-        areaDamage = shieldInstance.AddComponent<ShieldAreaDamage>();
-        areaDamage.Initialize(dame, damageInterval);
-    }
-
-    private void Update()
-    {
-        if (shieldInstance != null)
-            shieldInstance.transform.position = spawnHolder.position;
+        shieldInstance.transform.position = spawnHolder.position;
 
         timer += Time.deltaTime;
 
-        if (!shieldActive && timer >= cooldown)
+        float activeDuration = GetFinalDuration();
+        float cooldownTime = GetFinalCooldown();
+
+        if (!shieldActive && timer >= cooldownTime)
         {
             ActivateShield();
         }
 
-        if (shieldActive && timer >= cooldown + shieldDuration)
+        if (shieldActive && timer >= cooldownTime + activeDuration)
         {
             DeactivateShield();
         }
+    }
+
+    protected override void Attack()
+    {
+        // Shield sử dụng chu kỳ bật/tắt riêng trong Update
     }
 
     private void ActivateShield()
     {
         shieldActive = true;
         shieldInstance.SetActive(true);
-        timer = cooldown;
+        timer = GetFinalCooldown();
     }
 
     private void DeactivateShield()
@@ -60,16 +69,31 @@ public class ShieldWeaponController : WeaponController, IWeaponUI
         timer = 0f;
     }
 
-    public void UpdateWeaponData(int addDamage)
+    protected override void OnLevelUp(int newLevel)
     {
-        dame += addDamage;
-
+        UpdateShieldVisual();
         if (areaDamage != null)
-            areaDamage.UpdateDamage(dame);
+        {
+            areaDamage.UpdateDamage(GetFinalDamage());
+        }
     }
 
+    private void UpdateShieldVisual()
+    {
+        if (shieldInstance != null)
+        {
+            shieldInstance.transform.localScale = Vector3.one * GetFinalAreaScale();
+        }
+    }
+
+    // ================= TƯƠNG THÍCH NGƯỢC IWeaponUI =================
     public SpriteRenderer GetIcon()
     {
-        return weaponData.weaponSprite;
+        return weaponData != null ? weaponData.weaponSprite : null;
+    }
+
+    public void UpdateWeaponData(int addDamage)
+    {
+        UpgradeWeapon();
     }
 }

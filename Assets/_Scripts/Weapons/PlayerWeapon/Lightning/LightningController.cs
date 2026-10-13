@@ -3,85 +3,65 @@ using UnityEngine;
 
 public class LightningController : WeaponController, IWeaponUI
 {
-    private PlayerController player;
-
     [Header("Lightning Settings")]
     [SerializeField] private LayerMask enemyLayer;
     [SerializeField] private float searchRadius = 6f;
-    [SerializeField] private int maxChain = 3;
+    [SerializeField] private int baseMaxChain = 3;
 
-    private float timer;
-
-    private void Awake()
+    protected override void Attack()
     {
-        dame = weaponData.damage;
-        cooldown = weaponData.cooldown;
-    }
+        float radius = searchRadius * GetFinalAreaScale();
+        int initialStrikes = GetFinalProjectileCount();
+        int chainLimit = baseMaxChain + (currentLevel - 1);
 
-    private void Start()
-    {
-        player = GetComponentInParent<PlayerController>();
-    }
+        List<IDamageable> allHit = new();
 
-    private void Update()
-    {
-        timer += Time.deltaTime;
-        if (timer >= cooldown)
+        for (int i = 0; i < initialStrikes; i++)
         {
-            timer = 0f;
-            Shoot();
+            IDamageable target = FindNearestEnemy(spawnHolder.position, radius, allHit);
+            if (target == null) break;
+
+            ChainLightning(target, radius, chainLimit, allHit);
         }
     }
 
-    private void Shoot()
+    private void ChainLightning(IDamageable firstTarget, float radius, int maxChain, List<IDamageable> globalHit)
     {
-        if (player == null) return;
-
-        IDamageable firstTarget = FindNearestEnemy(player.transform.position);
-        if (firstTarget == null) return;
-
-        List<IDamageable> hitted = new();
         IDamageable current = firstTarget;
-
         int hitLeft = maxChain + 1;
+        int damage = GetFinalDamage();
 
         while (current != null && hitLeft > 0)
         {
-            hitted.Add(current);
-            current.TakeDamage(dame);
+            globalHit.Add(current);
+            current.TakeDamage(damage);
 
-            SpawnLightningFX(current.transform.position);
-
-            current = FindNearestEnemy(
-                current.transform.position,
-                hitted
-            );
+            if (current is Component comp)
+            {
+                SpawnLightningFX(comp.transform.position);
+                current = FindNearestEnemy(comp.transform.position, radius, globalHit);
+            }
+            else
+            {
+                break;
+            }
 
             hitLeft--;
         }
     }
 
-    private IDamageable FindNearestEnemy(
-        Vector2 center,
-        List<IDamageable> ignore = null)
+    private IDamageable FindNearestEnemy(Vector2 center, float radius, List<IDamageable> ignore = null)
     {
-        Collider2D[] hits =
-            Physics2D.OverlapCircleAll(center, searchRadius, enemyLayer);
-
+        Collider2D[] hits = Physics2D.OverlapCircleAll(center, radius, enemyLayer);
         IDamageable nearest = null;
         float minDist = float.MaxValue;
 
         foreach (var hit in hits)
         {
-            if (!hit.TryGetComponent(out IDamageable target))
-                continue;
+            if (!hit.TryGetComponent(out IDamageable target)) continue;
+            if (ignore != null && ignore.Contains(target)) continue;
 
-            if (ignore != null && ignore.Contains(target))
-                continue;
-
-            float dist =
-                Vector2.Distance(center, target.transform.position);
-
+            float dist = Vector2.Distance(center, target.transform.position);
             if (dist < minDist)
             {
                 minDist = dist;
@@ -94,25 +74,26 @@ public class LightningController : WeaponController, IWeaponUI
 
     private void SpawnLightningFX(Vector2 targetPos)
     {
-        GameObject fx =
-            PoolManager.Instance.Spawn(CONSTANT.Fx_Lightning, targetPos);
-
-        if (fx != null)
+        if (PoolManager.Instance != null && PoolManager.Instance.HasKey(CONSTANT.Fx_Lightning))
         {
-            fx.transform.position = targetPos;
-            fx.GetComponent<LightningFX>()?.Play();
+            GameObject fx = PoolManager.Instance.Spawn(CONSTANT.Fx_Lightning, targetPos);
+            if (fx != null)
+            {
+                fx.transform.position = targetPos;
+                fx.transform.localScale = Vector3.one * GetFinalAreaScale();
+                fx.GetComponent<LightningFX>()?.Play();
+            }
         }
     }
 
-    // ================= UI =================
+    // ================= TƯƠNG THÍCH NGƯỢC IWeaponUI =================
     public SpriteRenderer GetIcon()
     {
-        return weaponData.weaponSprite;
+        return weaponData != null ? weaponData.weaponSprite : null;
     }
 
     public void UpdateWeaponData(int addDame)
     {
-        dame += addDame;
-        maxChain += 1;
+        UpgradeWeapon();
     }
 }

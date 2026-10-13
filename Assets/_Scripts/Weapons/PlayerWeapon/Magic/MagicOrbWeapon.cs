@@ -1,74 +1,89 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class MagicOrbWeapon : WeaponController, IWeaponUI
 {
-    float timer = 0f;
-    [SerializeField] float range = 5f;
-    private void Awake()
-    {
-        this.dame = weaponData.damage;
-        this.speed = weaponData.projectileSpeed;
-        this.cooldown = weaponData.cooldown;
-    }
-    void Update()
-    {
-        timer += Time.deltaTime;
+    [SerializeField] private float baseRange = 6f;
 
-        if (timer >= cooldown)
+    protected override void Attack()
+    {
+        if (weaponData == null || !PoolManager.Instance.HasKey(weaponData.projectileKey))
+            return;
+
+        float effectiveRange = baseRange * GetFinalAreaScale();
+        List<Transform> targets = GetEnemiesInRange(effectiveRange);
+
+        if (targets.Count == 0) return;
+
+        int count = GetFinalProjectileCount();
+
+        for (int i = 0; i < count; i++)
         {
-            Fire();
-            timer = 0f;
+            // Phân bổ mục tiêu: nếu nhiều quái thì chia đều, nếu 1 quái thì dồn toàn bộ đạn vào nó
+            Transform target = targets[i % targets.Count];
+            SpawnOrb(target);
         }
     }
 
-    void Fire()
+    private void SpawnOrb(Transform target)
     {
-        if (!PoolManager.Instance.HasKey(weaponData.projectileKey))
-            return;
+        GameObject obj = PoolManager.Instance.Spawn(weaponData.projectileKey, spawnHolder.position);
+        if (obj == null) return;
 
-        Transform target = GetNearestEnemyInRange();
+        obj.transform.localScale = Vector3.one * GetFinalAreaScale();
 
-        // Không có enemy → không bắn
-        if (target == null) return;
-
-        GameObject obj = PoolManager.Instance.Spawn(
-            weaponData.projectileKey,
-            transform.position
-        );
-
-        obj.GetComponent<MagicOrbProjectile>()
-           .Initialize(weaponData.projectileKey, dame, speed, target);
+        if (obj.TryGetComponent(out MagicOrbProjectile orb))
+        {
+            orb.Initialize(weaponData.projectileKey, GetFinalDamage(), GetFinalSpeed(), target);
+        }
+        else if (obj.TryGetComponent(out Projectile proj))
+        {
+            Vector2 dir = ((Vector2)target.position - (Vector2)spawnHolder.position).normalized;
+            proj.InitializeAdvanced(
+                key: weaponData.projectileKey,
+                dame: GetFinalDamage(),
+                speed: GetFinalSpeed(),
+                dir: dir,
+                motion: ProjectileMotionType.Homing,
+                areaScale: GetFinalAreaScale(),
+                target: target
+            );
+        }
     }
 
-    Transform GetNearestEnemyInRange()
+    private List<Transform> GetEnemiesInRange(float range)
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag(CONSTANT.ENEMY_TAG);
-
-        Transform nearest = null;
-        float minDistance = range;
+        List<Transform> result = new();
         Vector2 playerPos = transform.position;
 
         foreach (GameObject enemy in enemies)
         {
-            float dist = Vector2.Distance(playerPos, enemy.transform.position);
+            if (enemy == null || !enemy.activeInHierarchy) continue;
 
-            if (dist <= range && dist < minDistance)
+            float dist = Vector2.Distance(playerPos, enemy.transform.position);
+            if (dist <= range)
             {
-                minDistance = dist;
-                nearest = enemy.transform;
+                result.Add(enemy.transform);
             }
         }
 
-        return nearest;
+        // Sắp xếp theo khoảng cách gần nhất
+        result.Sort((a, b) =>
+            Vector2.Distance(playerPos, a.position).CompareTo(Vector2.Distance(playerPos, b.position))
+        );
+
+        return result;
     }
 
+    // ================= TƯƠNG THÍCH NGƯỢC IWeaponUI =================
     public SpriteRenderer GetIcon()
     {
-        return weaponData.weaponSprite;
+        return weaponData != null ? weaponData.weaponSprite : null;
     }
 
     public void UpdateWeaponData(int AddDame)
     {
-        this.dame += AddDame;
+        UpgradeWeapon();
     }
 }

@@ -162,6 +162,7 @@ public class UIManager : MonoBehaviour
     }
 
     // ================= UPGRADE =================
+    // ================= UPGRADE =================
     private void Upgrade()
     {
         Time.timeScale = 0f;
@@ -169,16 +170,41 @@ public class UIManager : MonoBehaviour
 
         LoadCurrentWeapon();
 
-        // 1️⃣ TẠO POOL
+        // 1️⃣ TẠO POOL (Loại bỏ các vũ khí đã đạt cấp tối đa)
         List<GameObject> upgradePool = new();
 
-        if (currentWeapons.Count < maxWeapon)
-            upgradePool.AddRange(allWeapons);
-        else
-            upgradePool.AddRange(currentWeapons);
+        // Danh sách vũ khí đang sở hữu nhưng CHƯA đạt cấp tối đa
+        List<GameObject> upgradeableCurrent = currentWeapons
+            .Where(w => !IsWeaponMaxLevel(w))
+            .ToList();
 
-        // 2️⃣ RANDOM
+        if (currentWeapons.Count < maxWeapon)
+        {
+            // Được phép chọn vũ khí mới (chưa sở hữu) HOẶC nâng cấp vũ khí đang có (chưa max)
+            List<GameObject> unownedWeapons = allWeapons
+                .Where(w => !HasWeapon(w) && !IsWeaponMaxLevel(w))
+                .ToList();
+
+            upgradePool.AddRange(unownedWeapons);
+            upgradePool.AddRange(upgradeableCurrent);
+        }
+        else
+        {
+            // Đã đầy slot: chỉ cho phép nâng cấp các vũ khí đang có mà chưa max
+            upgradePool.AddRange(upgradeableCurrent);
+        }
+
+        // Nếu tất cả vũ khí đều đã Max Level và không còn gì để nâng cấp
+        if (upgradePool.Count == 0)
+        {
+            panelUpgrade.SetActive(false);
+            Time.timeScale = 1f;
+            return;
+        }
+
+        // 2️⃣ RANDOM VÀ LOẠI TRÙNG
         var candidates = upgradePool
+            .Distinct()
             .OrderBy(_ => Random.value)
             .ToList();
 
@@ -200,8 +226,12 @@ public class UIManager : MonoBehaviour
         }
     }
 
-
-
+    private bool IsWeaponMaxLevel(GameObject weapon)
+    {
+        if (weapon == null) return true;
+        var ctrl = weapon.GetComponent<WeaponController>();
+        return ctrl != null && ctrl.IsMaxLevel;
+    }
 
     // ================= WEAPON API =================
     public bool HasWeapon(GameObject weapon)
@@ -237,6 +267,13 @@ public class UIManager : MonoBehaviour
 
     public void UpgradeWeapon(GameObject weapon)
     {
+        var ctrl = weapon.GetComponent<WeaponController>();
+        if (ctrl != null)
+        {
+            ctrl.UpgradeWeapon();
+            return;
+        }
+
         var weaponUI = weapon.GetComponent<IWeaponUI>();
         if (weaponUI != null)
         {
