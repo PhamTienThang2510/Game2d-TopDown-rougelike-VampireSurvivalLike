@@ -203,8 +203,10 @@ public class UIManager : MonoBehaviour
             foreach (var w in upgradeableCurrentWeapons) candidatePool.Add(UpgradeOptionCandidate.Weapon(w));
         }
 
-        // 2️⃣ THÊM PASSIVE ITEM HỢP LỆ VÀO POOL
-        if (PlayerPassiveManager.Instance != null && allPassives != null && allPassives.Count > 0)
+        // 2️⃣ THÊM PASSIVE ITEM HỢP LỆ VÀO POOL (Chỉ xuất hiện khi người chơi đã có ít nhất 1 vũ khí khởi đầu)
+        bool hasStartingWeapon = currentWeapons.Count > 0;
+
+        if (hasStartingWeapon && PlayerPassiveManager.Instance != null && allPassives != null && allPassives.Count > 0)
         {
             bool canAddPassive = PlayerPassiveManager.Instance.CanAddPassive();
 
