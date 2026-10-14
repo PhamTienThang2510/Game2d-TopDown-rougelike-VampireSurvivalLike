@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fbc3ca82d1b3334ba30d07ccfff65ac, type: 3}
+  m_Name: apple
+  m_EditorClassIdentifier: Assembly-CSharp::PassiveItemData
+  passiveName: "Qu\u1EA3 t\xE1o may m\u1EAFn"
+  icon: {fileID: 8765297898444631108, guid: 92cacb3fe6659964ab2f7f7f04376fc2, type: 3}
+  baseDescription: "t\u0103ng 10% damage"
+  statType: 0
+  levels:
+  - Value: 10
+    upgradeDescription: "+10% s\xE1t th\u01B0\u01A1ng to\xE0n v\u0169 kh\xED"
