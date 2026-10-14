@@ -126,20 +126,23 @@ public class Projectile : MonoBehaviour
                 break;
 
             case ProjectileMotionType.SineWave:
+            {
                 Vector2 forward = baseDirection * (speed * timer);
                 Vector2 wave = perpendicular * (Mathf.Sin(timer * waveFrequency) * waveAmplitude);
                 transform.position = (Vector3)(startPos + forward + wave);
                 break;
+            }
 
             case ProjectileMotionType.Boomerang:
+            {
                 // Vừa bay vừa xoay tròn
                 transform.Rotate(0, 0, spinSpeed * Time.deltaTime);
 
                 if (!isReturning)
                 {
-                    Vector2 forward = direction * speed * Time.deltaTime;
+                    Vector2 boomerangForward = direction * speed * Time.deltaTime;
                     float curve = Mathf.Sin(timer * waveFrequency) * waveAmplitude * Time.deltaTime;
-                    transform.position += (Vector3)(forward + perpendicular * curve);
+                    transform.position += (Vector3)(boomerangForward + perpendicular * curve);
 
                     if (Vector2.Distance(startPos, transform.position) >= maxBoomerangDistance)
                     {
@@ -164,6 +167,7 @@ public class Projectile : MonoBehaviour
                     }
                 }
                 break;
+            }
 
             case ProjectileMotionType.Homing:
                 if (targetEnemy != null && targetEnemy.gameObject.activeInHierarchy)
