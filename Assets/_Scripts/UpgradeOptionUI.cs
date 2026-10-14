@@ -12,13 +12,18 @@ public class UpgradeOptionUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textDescription;
 
     private GameObject weapon;
+    private PassiveItemData passiveData;
 
-    public void Setup(GameObject weapon)
+    /// <summary>
+    /// Cấu hình cho lựa chọn là Vũ Khí
+    /// </summary>
+    public void SetupWeapon(GameObject weaponObj)
     {
-        this.weapon = weapon;
+        this.weapon = weaponObj;
+        this.passiveData = null;
 
-        var controller = weapon.GetComponent<WeaponController>();
-        var weaponUI = weapon.GetComponent<IWeaponUI>();
+        var controller = weaponObj.GetComponent<WeaponController>();
+        var weaponUI = weaponObj.GetComponent<IWeaponUI>();
 
         // 1. Icon
         if (weaponImage != null)
@@ -35,7 +40,7 @@ public class UpgradeOptionUI : MonoBehaviour
             if (textName != null)
                 textName.text = controller.GetWeaponName();
 
-            bool isOwned = UIManager.instance != null && UIManager.instance.HasWeapon(weapon);
+            bool isOwned = UIManager.instance != null && UIManager.instance.HasWeapon(weaponObj);
 
             if (textLevel != null)
             {
@@ -52,7 +57,63 @@ public class UpgradeOptionUI : MonoBehaviour
             }
         }
 
-        // 3. Button
+        SetupButton();
+    }
+
+    /// <summary>
+    /// Cấu hình cho lựa chọn là Trang Bị Phụ Trợ (Passive Item)
+    /// </summary>
+    public void SetupPassive(PassiveItemData passive)
+    {
+        this.passiveData = passive;
+        this.weapon = null;
+
+        if (passive == null) return;
+
+        // 1. Icon
+        if (weaponImage != null)
+        {
+            weaponImage.sprite = passive.icon;
+        }
+
+        // 2. Name
+        if (textName != null)
+        {
+            textName.text = passive.passiveName;
+        }
+
+        // 3. Level & Description
+        int currentLvl = (PlayerPassiveManager.Instance != null)
+            ? PlayerPassiveManager.Instance.GetPassiveLevel(passive)
+            : 0;
+
+        if (textLevel != null)
+        {
+            textLevel.text = (currentLvl == 0)
+                ? "MỚI!"
+                : $"Cấp {currentLvl} ➔ {currentLvl + 1}";
+        }
+
+        if (textDescription != null)
+        {
+            textDescription.text = (currentLvl == 0)
+                ? passive.baseDescription
+                : passive.GetUpgradeDescription(currentLvl + 1);
+        }
+
+        SetupButton();
+    }
+
+    /// <summary>
+    /// Tương thích ngược với các lời gọi cũ
+    /// </summary>
+    public void Setup(GameObject weaponObj)
+    {
+        SetupWeapon(weaponObj);
+    }
+
+    private void SetupButton()
+    {
         if (pickButton != null)
         {
             pickButton.onClick.RemoveAllListeners();
@@ -62,9 +123,15 @@ public class UpgradeOptionUI : MonoBehaviour
 
     private void Pick()
     {
-        if (UIManager.instance != null && weapon != null)
+        if (UIManager.instance == null) return;
+
+        if (weapon != null)
         {
             UIManager.instance.PickWeapon(weapon);
+        }
+        else if (passiveData != null)
+        {
+            UIManager.instance.PickPassive(passiveData);
         }
     }
 }

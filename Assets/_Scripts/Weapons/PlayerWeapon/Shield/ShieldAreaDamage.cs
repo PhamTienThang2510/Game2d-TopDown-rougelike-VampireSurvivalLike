@@ -20,6 +20,16 @@ public class ShieldAreaDamage : MonoBehaviour
         this.dame = dame;
     }
 
+    private void OnEnable()
+    {
+        damageTimers.Clear();
+    }
+
+    private void OnDisable()
+    {
+        damageTimers.Clear();
+    }
+
     private void Update()
     {
         var enemies = new List<IDamageable>(damageTimers.Keys);

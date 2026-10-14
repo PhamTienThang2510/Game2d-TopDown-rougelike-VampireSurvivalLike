@@ -19,12 +19,15 @@ public class ShieldWeaponController : WeaponController, IWeaponUI
         {
             shieldInstance = Instantiate(shieldPrefab, spawnHolder.position, Quaternion.identity);
             shieldInstance.transform.SetParent(spawnHolder);
-            shieldInstance.SetActive(false);
-
-            areaDamage = shieldInstance.AddComponent<ShieldAreaDamage>();
+            areaDamage = shieldInstance.GetComponent<ShieldAreaDamage>();
+            if (areaDamage == null)
+            {
+                areaDamage = shieldInstance.AddComponent<ShieldAreaDamage>();
+            }
             areaDamage.Initialize(GetFinalDamage(), baseDamageInterval);
 
             UpdateShieldVisual();
+            shieldInstance.SetActive(false);
         }
     }
 

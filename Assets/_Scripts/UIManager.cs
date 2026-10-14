@@ -17,6 +17,9 @@ public class UIManager : MonoBehaviour
     [Header("All Weapons")]
     [SerializeField] private List<GameObject> allWeapons = new();
 
+    [Header("All Passives")]
+    [SerializeField] private List<PassiveItemData> allPassives = new();
+
     [Header("Weapon Settings")]
     [SerializeField] private int maxWeapon = 3;
 
@@ -162,7 +165,16 @@ public class UIManager : MonoBehaviour
     }
 
     // ================= UPGRADE =================
-    // ================= UPGRADE =================
+    private struct UpgradeOptionCandidate
+    {
+        public bool isWeapon;
+        public GameObject weapon;
+        public PassiveItemData passive;
+
+        public static UpgradeOptionCandidate Weapon(GameObject w) => new() { isWeapon = true, weapon = w };
+        public static UpgradeOptionCandidate Passive(PassiveItemData p) => new() { isWeapon = false, passive = p };
+    }
+
     private void Upgrade()
     {
         Time.timeScale = 0f;
@@ -170,54 +182,73 @@ public class UIManager : MonoBehaviour
 
         LoadCurrentWeapon();
 
-        // 1️⃣ TẠO POOL (Loại bỏ các vũ khí đã đạt cấp tối đa)
-        List<GameObject> upgradePool = new();
+        List<UpgradeOptionCandidate> candidatePool = new();
 
-        // Danh sách vũ khí đang sở hữu nhưng CHƯA đạt cấp tối đa
-        List<GameObject> upgradeableCurrent = currentWeapons
+        // 1️⃣ THÊM VŨ KHÍ HỢP LỆ VÀO POOL
+        List<GameObject> upgradeableCurrentWeapons = currentWeapons
             .Where(w => !IsWeaponMaxLevel(w))
             .ToList();
 
         if (currentWeapons.Count < maxWeapon)
         {
-            // Được phép chọn vũ khí mới (chưa sở hữu) HOẶC nâng cấp vũ khí đang có (chưa max)
             List<GameObject> unownedWeapons = allWeapons
                 .Where(w => !HasWeapon(w) && !IsWeaponMaxLevel(w))
                 .ToList();
 
-            upgradePool.AddRange(unownedWeapons);
-            upgradePool.AddRange(upgradeableCurrent);
+            foreach (var w in unownedWeapons) candidatePool.Add(UpgradeOptionCandidate.Weapon(w));
+            foreach (var w in upgradeableCurrentWeapons) candidatePool.Add(UpgradeOptionCandidate.Weapon(w));
         }
         else
         {
-            // Đã đầy slot: chỉ cho phép nâng cấp các vũ khí đang có mà chưa max
-            upgradePool.AddRange(upgradeableCurrent);
+            foreach (var w in upgradeableCurrentWeapons) candidatePool.Add(UpgradeOptionCandidate.Weapon(w));
         }
 
-        // Nếu tất cả vũ khí đều đã Max Level và không còn gì để nâng cấp
-        if (upgradePool.Count == 0)
+        // 2️⃣ THÊM PASSIVE ITEM HỢP LỆ VÀO POOL
+        if (PlayerPassiveManager.Instance != null && allPassives != null && allPassives.Count > 0)
+        {
+            bool canAddPassive = PlayerPassiveManager.Instance.CanAddPassive();
+
+            foreach (var passive in allPassives)
+            {
+                if (passive == null) continue;
+                bool isOwned = PlayerPassiveManager.Instance.HasPassive(passive);
+                bool isMax = PlayerPassiveManager.Instance.IsMaxLevel(passive);
+
+                if (isMax) continue;
+
+                if (isOwned || canAddPassive)
+                {
+                    candidatePool.Add(UpgradeOptionCandidate.Passive(passive));
+                }
+            }
+        }
+
+        // 3️⃣ NẾU KHÔNG CÒN GÌ ĐỂ NÂNG CẤP
+        if (candidatePool.Count == 0)
         {
             panelUpgrade.SetActive(false);
             Time.timeScale = 1f;
             return;
         }
 
-        // 2️⃣ RANDOM VÀ LOẠI TRÙNG
-        var candidates = upgradePool
+        // 4️⃣ RANDOM VÀ LOẠI TRÙNG
+        var selected = candidatePool
             .Distinct()
             .OrderBy(_ => Random.value)
             .ToList();
 
-        // 3️⃣ LẤY OPTION UI TỪ PANEL
-        var optionUIs = panelUpgrade
-            .GetComponentsInChildren<UpgradeOptionUI>(true);
+        // 5️⃣ GÁN LÊN UI
+        var optionUIs = panelUpgrade.GetComponentsInChildren<UpgradeOptionUI>(true);
 
         for (int i = 0; i < optionUIs.Length; i++)
         {
-            if (i < candidates.Count)
+            if (i < selected.Count)
             {
                 optionUIs[i].gameObject.SetActive(true);
-                optionUIs[i].Setup(candidates[i]);
+                if (selected[i].isWeapon)
+                    optionUIs[i].SetupWeapon(selected[i].weapon);
+                else
+                    optionUIs[i].SetupPassive(selected[i].passive);
             }
             else
             {
@@ -233,7 +264,7 @@ public class UIManager : MonoBehaviour
         return ctrl != null && ctrl.IsMaxLevel;
     }
 
-    // ================= WEAPON API =================
+    // ================= WEAPON & PASSIVE API =================
     public bool HasWeapon(GameObject weapon)
     {
         return currentWeapons.Contains(weapon);
@@ -260,6 +291,17 @@ public class UIManager : MonoBehaviour
             UpgradeWeapon(weapon);
         else
             AddWeapon(weapon);
+
+        panelUpgrade.SetActive(false);
+        Time.timeScale = 1f;
+    }
+
+    public void PickPassive(PassiveItemData passive)
+    {
+        if (PlayerPassiveManager.Instance != null && passive != null)
+        {
+            PlayerPassiveManager.Instance.AddOrUpgradePassive(passive);
+        }
 
         panelUpgrade.SetActive(false);
         Time.timeScale = 1f;

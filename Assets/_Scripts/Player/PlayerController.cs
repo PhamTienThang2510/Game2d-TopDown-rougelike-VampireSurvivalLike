@@ -11,11 +11,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private float MoveSpeed = 5f;
 
+    private float baseMoveSpeed = 5f;
+
     private void Awake()
     {
+        baseMoveSpeed = MoveSpeed;
         playerInput = GetComponent<PlayerInput>();
         if (rb == null)
             rb = GetComponent<Rigidbody2D>();
+    }
+
+    public void UpdateMoveSpeedBonus(float bonusPercent)
+    {
+        MoveSpeed = baseMoveSpeed * (1f + bonusPercent);
     }
 
     void Update()

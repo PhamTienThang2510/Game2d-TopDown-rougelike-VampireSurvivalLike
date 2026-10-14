@@ -97,13 +97,35 @@
 
 ---
 
-## 📌 4. Kế Hoạch Cho Ngày Mai (Next Steps)
+---
 
-1. **Giai đoạn 2: Hiện thực hóa Passive Items (Trang bị phụ trợ)**:
-   - Tạo các asset mẫu: Rau chân vịt (+Sát thương %), Sách phép (-Hồi chiêu %), Giày (+Tốc chạy), Chân nến (+Kích thước đạn %), Nam châm (+Tầm hút ngọc).
-   - Tạo `PlayerPassiveManager` gắn trên Player để quản lý các món Passive đang sở hữu.
-   - Kết nối trực tiếp vào hàm `GetPassiveBonus()` của `WeaponController` để vũ khí tự động scale theo trang bị.
-   - Bổ sung Passive Items vào pool bốc thưởng của `UIManager`.
-2. **Giai đoạn 3: Hệ thống Tiến Hóa Vũ Khí (Weapon Evolution)**:
-   - Kích hoạt khi mở rương báu (`Treasure.cs`) nếu Player có 1 Weapon Lv.8 + 1 Passive tương ứng.
-   - Tạo các biến thể vũ khí tiến hóa tối thượng (ví dụ: *Thousand Edge*, *Bloody Tear*, *Thunder Loop*).
+## 💎 4. CẬP NHẬT GIAI ĐOẠN 2: HỆ THỐNG PASSIVE ITEMS (TRANG BỊ PHỤ TRỢ)
+**Trạng thái:** ✅ ĐÃ HOÀN THÀNH
+
+### Các thành phần đã triển khai:
+1. **`Assets/_Scripts/Player/PlayerPassiveManager.cs`**:
+   - Quản lý danh sách các trang bị phụ trợ người chơi đang sở hữu (`maxPassiveSlots = 3`).
+   - Cung cấp hàm `GetBonus(statType)` tính toán tổng % hoặc số lượng chỉ số tăng thêm.
+   - Cơ chế hồi máu theo giây (`Recovery`) tự động kích hoạt trong `Update()`.
+   - Cơ chế **Fail-safe Auto-Attach**: Trong `Player.Awake()`, nếu GameObject Player chưa có component `PlayerPassiveManager`, script sẽ tự động `AddComponent` để người dùng không cần phải gán thủ công trong Editor.
+2. **Kết nối trực tiếp vào `WeaponController.cs`**:
+   - `GetFinalDamage()`: Tự động nhân thêm % bonus từ `PassiveStatType.Attack`.
+   - `GetFinalCooldown()`: Tự động giảm % hồi chiêu từ `PassiveStatType.Cooldown`.
+   - `GetFinalSpeed()`: Tự động tăng tốc bay từ `PassiveStatType.BulletSpeed`.
+   - `GetFinalProjectileCount()`: Tự động cộng thêm số lượng đạn từ `PassiveStatType.AmountBullet`.
+   - `GetFinalAreaScale()`: Tự động tăng kích thước đạn/vùng quét từ `PassiveStatType.Area`.
+3. **Kết nối trực tiếp vào `Player.cs` & `PlayerController.cs`**:
+   - `Player.TakeDamage()`: Tự động trừ đi điểm Giáp từ `PassiveStatType.Armor`.
+   - `Player.UpdateMaxHealthBonus()`: Tăng máu tối đa từ `PassiveStatType.MaxHealth` và cộng dồn lượng máu chênh lệch.
+   - `PlayerController.UpdateMoveSpeedBonus()`: Tăng tốc độ di chuyển từ `PassiveStatType.MoveSpeed`.
+4. **Nâng cấp Giao diện Nâng Cấp (`UpgradeOptionUI` & `UIManager`)**:
+   - `UpgradeOptionUI.cs`: Hỗ trợ cả `SetupWeapon(weapon)` lẫn `SetupPassive(passiveData)`.
+   - `UIManager.cs`: Bổ sung danh sách `allPassives` vào pool bốc thưởng. Người chơi khi lên cấp sẽ nhận được ngẫu nhiên cả Vũ khí và Passive Item. Tự động loại bỏ các món đã đạt cấp tối đa (`IsMaxLevel`).
+
+---
+
+## 📌 5. Kế Hoạch Tiếp Theo: GIAI ĐOẠN 3 (TIẾN HÓA VŨ KHÍ)
+1. **Kích hoạt Tiến Hóa**:
+   - Khi mở rương báu (`Treasure.cs`) hoặc khi bốc thưởng: Kiểm tra điều kiện Player có Vũ khí Lv.8 (Max) + Passive tương ứng.
+2. **Thay thế / Biến đổi Vũ Khí**:
+   - Thay thế GameObject vũ khí thường bằng vũ khí tiến hóa tối thượng (ví dụ: *Knife + Bracer* ➔ *Thousand Edge*).

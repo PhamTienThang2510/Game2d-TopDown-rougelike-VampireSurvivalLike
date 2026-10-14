@@ -126,9 +126,9 @@ public class Projectile : MonoBehaviour
                 break;
 
             case ProjectileMotionType.SineWave:
-                Vector2 forwardMove = direction * speed * Time.deltaTime;
-                float waveOffset = Mathf.Sin(timer * waveFrequency) * waveAmplitude * Time.deltaTime;
-                transform.position += (Vector3)(forwardMove + perpendicular * waveOffset);
+                Vector2 forward = baseDirection * (speed * timer);
+                Vector2 wave = perpendicular * (Mathf.Sin(timer * waveFrequency) * waveAmplitude);
+                transform.position = (Vector3)(startPos + forward + wave);
                 break;
 
             case ProjectileMotionType.Boomerang:

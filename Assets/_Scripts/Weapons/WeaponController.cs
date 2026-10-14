@@ -69,12 +69,48 @@ public abstract class WeaponController : MonoBehaviour
     /// </summary>
     protected abstract void Attack();
 
-    // ================= STAT CALCULATIONS (SẴN SÀNG CHO PASSIVE) =================
-    public virtual int GetFinalDamage() => currentDamage;
-    public virtual float GetFinalCooldown() => Mathf.Max(0.05f, currentCooldown);
-    public virtual float GetFinalSpeed() => currentSpeed;
-    public virtual int GetFinalProjectileCount() => Mathf.Max(1, currentProjectileCount);
-    public virtual float GetFinalAreaScale() => Mathf.Max(0.1f, currentAreaScale);
+    // ================= STAT CALCULATIONS (KẾT NỐI PASSIVE ITEMS) =================
+    public virtual int GetFinalDamage()
+    {
+        float bonus = (PlayerPassiveManager.Instance != null)
+            ? PlayerPassiveManager.Instance.GetBonus(PassiveStatType.Attack)
+            : 0f;
+        return Mathf.RoundToInt(currentDamage * (1f + bonus));
+    }
+
+    public virtual float GetFinalCooldown()
+    {
+        float bonus = (PlayerPassiveManager.Instance != null)
+            ? PlayerPassiveManager.Instance.GetBonus(PassiveStatType.Cooldown)
+            : 0f;
+        float cdrMultiplier = Mathf.Max(0.1f, 1f - bonus);
+        return Mathf.Max(0.05f, currentCooldown * cdrMultiplier);
+    }
+
+    public virtual float GetFinalSpeed()
+    {
+        float bonus = (PlayerPassiveManager.Instance != null)
+            ? PlayerPassiveManager.Instance.GetBonus(PassiveStatType.BulletSpeed)
+            : 0f;
+        return currentSpeed * (1f + bonus);
+    }
+
+    public virtual int GetFinalProjectileCount()
+    {
+        int bonus = (PlayerPassiveManager.Instance != null)
+            ? Mathf.RoundToInt(PlayerPassiveManager.Instance.GetBonus(PassiveStatType.AmountBullet))
+            : 0;
+        return Mathf.Max(1, currentProjectileCount + bonus);
+    }
+
+    public virtual float GetFinalAreaScale()
+    {
+        float bonus = (PlayerPassiveManager.Instance != null)
+            ? PlayerPassiveManager.Instance.GetBonus(PassiveStatType.Area)
+            : 0f;
+        return Mathf.Max(0.1f, currentAreaScale * (1f + bonus));
+    }
+
     public virtual float GetFinalDuration() => Mathf.Max(0.1f, currentDuration);
 
     // ================= UPGRADE LOGIC =================
@@ -145,9 +181,22 @@ public abstract class WeaponController : MonoBehaviour
         switch (currentFirePattern)
         {
             case FirePattern.Forward:
-                for (int i = 0; i < count; i++)
+                if (count == 1)
                 {
                     SpawnSingleProjectile(origin, baseDir, targetEnemy);
+                }
+                else
+                {
+                    // Dàn đạn song song (Parallel spacing) tránh bị đè hình khi bắn nhiều đạn về trước
+                    Vector2 normal = new Vector2(-baseDir.y, baseDir.x).normalized;
+                    float spacing = 0.3f * GetFinalAreaScale();
+                    float startOffset = -(count - 1) * spacing / 2f;
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        Vector2 spawnPos = origin + normal * (startOffset + i * spacing);
+                        SpawnSingleProjectile(spawnPos, baseDir, targetEnemy);
+                    }
                 }
                 break;
 
@@ -180,7 +229,7 @@ public abstract class WeaponController : MonoBehaviour
                 break;
 
             case FirePattern.Burst:
-                StartCoroutine(BurstRoutine(origin, baseDir, count, targetEnemy));
+                StartCoroutine(BurstRoutine(count, targetEnemy));
                 break;
 
             case FirePattern.TargetEnemy:
@@ -189,11 +238,12 @@ public abstract class WeaponController : MonoBehaviour
         }
     }
 
-    private IEnumerator BurstRoutine(Vector2 origin, Vector2 baseDir, int count, Transform targetEnemy)
+    private IEnumerator BurstRoutine(int count, Transform targetEnemy)
     {
         for (int i = 0; i < count; i++)
         {
-            SpawnSingleProjectile(spawnHolder.position, baseDir, targetEnemy);
+            Vector2 currentDir = GetAimDirection();
+            SpawnSingleProjectile(spawnHolder.position, currentDir, targetEnemy);
             yield return new WaitForSeconds(0.08f);
         }
     }
