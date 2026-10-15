@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LightningController : WeaponController, IWeaponUI
+public class LightningController : WeaponBase, IWeaponUI
 {
     [Header("Lightning Settings")]
     [SerializeField] private LayerMask enemyLayer;

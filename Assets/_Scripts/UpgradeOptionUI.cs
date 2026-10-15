@@ -22,38 +22,38 @@ public class UpgradeOptionUI : MonoBehaviour
         this.weapon = weaponObj;
         this.passiveData = null;
 
-        var controller = weaponObj.GetComponent<WeaponController>();
+        var weaponBase = weaponObj.GetComponent<WeaponBase>();
         var weaponUI = weaponObj.GetComponent<IWeaponUI>();
 
         // 1. Icon
         if (weaponImage != null)
         {
-            if (controller != null && controller.GetIconSprite() != null)
-                weaponImage.sprite = controller.GetIconSprite();
+            if (weaponBase != null && weaponBase.GetIconSprite() != null)
+                weaponImage.sprite = weaponBase.GetIconSprite();
             else if (weaponUI != null && weaponUI.GetIcon() != null)
                 weaponImage.sprite = weaponUI.GetIcon().sprite;
         }
 
         // 2. Name & Description & Level
-        if (controller != null)
+        if (weaponBase != null)
         {
             if (textName != null)
-                textName.text = controller.GetWeaponName();
+                textName.text = weaponBase.GetWeaponName();
 
-            bool isOwned = UIManager.instance != null && UIManager.instance.HasWeapon(weaponObj);
+            bool isOwned = WeaponController.Instance != null && WeaponController.Instance.HasWeapon(weaponObj);
 
             if (textLevel != null)
             {
                 textLevel.text = isOwned
-                    ? $"Cấp {controller.currentLevel} ➔ {controller.currentLevel + 1}"
+                    ? $"Cấp {weaponBase.currentLevel} ➔ {weaponBase.currentLevel + 1}"
                     : "MỚI!";
             }
 
             if (textDescription != null)
             {
                 textDescription.text = isOwned
-                    ? controller.GetNextUpgradeDescription()
-                    : (controller.weaponData != null ? controller.weaponData.baseDescription : string.Empty);
+                    ? weaponBase.GetNextUpgradeDescription()
+                    : (weaponBase.weaponData != null ? weaponBase.weaponData.baseDescription : string.Empty);
             }
         }
 
@@ -123,15 +123,15 @@ public class UpgradeOptionUI : MonoBehaviour
 
     private void Pick()
     {
-        if (UIManager.instance == null) return;
-
         if (weapon != null)
         {
-            UIManager.instance.PickWeapon(weapon);
+            EventBus<OnWeaponSelectedEvent>.Publish(new OnWeaponSelectedEvent(weapon));
+            EventBus<OnUpgradeCompletedEvent>.Publish();
         }
         else if (passiveData != null)
         {
-            UIManager.instance.PickPassive(passiveData);
+            EventBus<OnPassiveSelectedEvent>.Publish(new OnPassiveSelectedEvent(passiveData));
+            EventBus<OnUpgradeCompletedEvent>.Publish();
         }
     }
 }

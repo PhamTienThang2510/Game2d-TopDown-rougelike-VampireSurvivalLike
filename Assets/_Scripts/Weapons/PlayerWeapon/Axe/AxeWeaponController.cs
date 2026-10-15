@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class AxeWeaponController : WeaponController, IWeaponUI
+public class AxeWeaponController : WeaponBase, IWeaponUI
 {
     protected override void Attack()
     {

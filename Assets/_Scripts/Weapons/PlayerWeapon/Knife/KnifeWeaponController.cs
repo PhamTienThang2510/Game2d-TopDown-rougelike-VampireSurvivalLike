@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class KnifeWeaponController : WeaponController, IWeaponUI
+public class KnifeWeaponController : WeaponBase, IWeaponUI
 {
     protected override void Attack()
     {

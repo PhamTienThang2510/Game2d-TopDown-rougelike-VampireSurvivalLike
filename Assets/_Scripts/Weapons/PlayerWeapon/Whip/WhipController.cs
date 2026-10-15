@@ -1,7 +1,7 @@
 using UnityEngine;
 using static CONSTANT;
 
-public class WhipController : WeaponController, IWeaponUI
+public class WhipController : WeaponBase, IWeaponUI
 {
     [Header("Whip Settings")]
     [SerializeField] private LayerMask enemyLayer;

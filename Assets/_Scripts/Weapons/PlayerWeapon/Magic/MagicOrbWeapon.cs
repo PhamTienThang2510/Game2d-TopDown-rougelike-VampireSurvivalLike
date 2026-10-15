@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MagicOrbWeapon : WeaponController, IWeaponUI
+public class MagicOrbWeapon : WeaponBase, IWeaponUI
 {
     [SerializeField] private float baseRange = 6f;
 

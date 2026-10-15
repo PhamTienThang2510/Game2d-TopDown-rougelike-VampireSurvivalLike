@@ -1,292 +1,227 @@
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public abstract class WeaponController : MonoBehaviour
+/// <summary>
+/// Bộ quản lý kho vũ khí của người chơi (Weapon Inventory & Manager).
+/// Quản lý danh sách vũ khí sở hữu, slot tối đa, thêm và nâng cấp vũ khí thông qua EventBus.
+/// </summary>
+public class WeaponController : MonoBehaviour
 {
-    [Header("Data & Placement")]
-    [SerializeField] public WeaponData weaponData;
-    [SerializeField] public Transform spawnHolder;
-
-    [Header("Runtime Stats (Level)")]
-    public int currentLevel { get; protected set; } = 1;
-    public int currentDamage { get; protected set; } = 1;
-    public float currentSpeed { get; protected set; } = 10f;
-    public float currentCooldown { get; protected set; } = 1f;
-    public int currentProjectileCount { get; protected set; } = 1;
-    public float currentAreaScale { get; protected set; } = 1f;
-    public float currentDuration { get; protected set; } = 1f;
-
-    [Header("Runtime Attack Pattern")]
-    public FirePattern currentFirePattern { get; protected set; } = FirePattern.Forward;
-    public ProjectileMotionType currentMotionType { get; protected set; } = ProjectileMotionType.Straight;
-    public float currentSpreadAngle { get; protected set; } = 15f;
-    public float currentSpinSpeed { get; protected set; } = 720f;
-    public float currentWaveFrequency { get; protected set; } = 10f;
-    public float currentWaveAmplitude { get; protected set; } = 1.2f;
-
-    [Header("Tương thích ngược")]
-    [SerializeField] public int dame;
-    [SerializeField] public float speed;
-    [SerializeField] public float cooldown;
-
-    protected float timer = 0f;
-    protected PlayerInput playerInput;
-
-    /// <summary>
-    /// Cho phép lớp con bật/tắt cơ chế tự động đếm giờ tấn công mặc định
-    /// </summary>
-    protected virtual bool AutoAttackEnabled => true;
-
-    public int MaxLevel => weaponData != null ? weaponData.MaxLevel : 8;
-    public bool IsMaxLevel => currentLevel >= MaxLevel;
-
-    protected virtual void Awake()
+    private static WeaponController _instance;
+    public static WeaponController Instance
     {
-        if (spawnHolder == null) spawnHolder = transform;
-        ApplyLevelStats(currentLevel);
-    }
-
-    protected virtual void Start()
-    {
-        playerInput = FindFirstObjectByType<PlayerInput>();
-    }
-
-    protected virtual void Update()
-    {
-        if (!AutoAttackEnabled) return;
-
-        timer += Time.deltaTime;
-        if (timer >= GetFinalCooldown())
+        get
         {
-            timer = 0f;
-            Attack();
-        }
-    }
-
-    /// <summary>
-    /// Hàm tấn công chính do từng loại vũ khí thực thi
-    /// </summary>
-    protected abstract void Attack();
-
-    // ================= STAT CALCULATIONS (KẾT NỐI PASSIVE ITEMS) =================
-    public virtual int GetFinalDamage()
-    {
-        float bonus = (PlayerPassiveManager.Instance != null)
-            ? PlayerPassiveManager.Instance.GetBonus(PassiveStatType.Attack)
-            : 0f;
-        return Mathf.RoundToInt(currentDamage * (1f + bonus));
-    }
-
-    public virtual float GetFinalCooldown()
-    {
-        float bonus = (PlayerPassiveManager.Instance != null)
-            ? PlayerPassiveManager.Instance.GetBonus(PassiveStatType.Cooldown)
-            : 0f;
-        float cdrMultiplier = Mathf.Max(0.1f, 1f - bonus);
-        return Mathf.Max(0.05f, currentCooldown * cdrMultiplier);
-    }
-
-    public virtual float GetFinalSpeed()
-    {
-        float bonus = (PlayerPassiveManager.Instance != null)
-            ? PlayerPassiveManager.Instance.GetBonus(PassiveStatType.BulletSpeed)
-            : 0f;
-        return currentSpeed * (1f + bonus);
-    }
-
-    public virtual int GetFinalProjectileCount()
-    {
-        int bonus = (PlayerPassiveManager.Instance != null)
-            ? Mathf.RoundToInt(PlayerPassiveManager.Instance.GetBonus(PassiveStatType.AmountBullet))
-            : 0;
-        return Mathf.Max(1, currentProjectileCount + bonus);
-    }
-
-    public virtual float GetFinalAreaScale()
-    {
-        float bonus = (PlayerPassiveManager.Instance != null)
-            ? PlayerPassiveManager.Instance.GetBonus(PassiveStatType.Area)
-            : 0f;
-        return Mathf.Max(0.1f, currentAreaScale * (1f + bonus));
-    }
-
-    public virtual float GetFinalDuration() => Mathf.Max(0.1f, currentDuration);
-
-    // ================= UPGRADE LOGIC =================
-    public virtual void ApplyLevelStats(int level)
-    {
-        currentLevel = level;
-
-        if (weaponData == null) return;
-
-        WeaponLevelData lvlData = weaponData.GetLevelData(level);
-        if (lvlData != null)
-        {
-            currentDamage = lvlData.damage;
-            currentSpeed = lvlData.projectileSpeed;
-            currentCooldown = lvlData.cooldown;
-            currentProjectileCount = lvlData.projectileCount;
-            currentAreaScale = lvlData.areaScale;
-            currentDuration = lvlData.duration;
-
-            currentFirePattern = lvlData.firePattern;
-            currentMotionType = lvlData.motionType;
-            currentSpreadAngle = lvlData.spreadAngle;
-            currentSpinSpeed = lvlData.spinSpeed;
-            currentWaveFrequency = lvlData.waveFrequency;
-            currentWaveAmplitude = lvlData.waveAmplitude;
-
-            // Đồng bộ với các biến cũ
-            this.dame = currentDamage;
-            this.speed = currentSpeed;
-            this.cooldown = currentCooldown;
-        }
-    }
-
-    public virtual void UpgradeWeapon()
-    {
-        if (IsMaxLevel) return;
-
-        currentLevel++;
-        ApplyLevelStats(currentLevel);
-        OnLevelUp(currentLevel);
-    }
-
-    protected virtual void OnLevelUp(int newLevel) { }
-
-    // ================= COMMON HELPERS =================
-    protected virtual Vector2 GetAimDirection()
-    {
-        if (playerInput != null)
-        {
-            Vector2 dir = playerInput.LastMoveDirection;
-            if (dir.sqrMagnitude > 0.001f)
-                return dir.normalized;
-        }
-        return Vector2.right;
-    }
-
-    /// <summary>
-    /// Bắn đạn linh động theo cấu hình hiện tại (Forward, FanSpread, Radial, Burst...)
-    /// </summary>
-    protected void ExecuteFirePattern(Vector2 baseDir, Transform targetEnemy = null)
-    {
-        if (weaponData == null || !PoolManager.Instance.HasKey(weaponData.projectileKey))
-            return;
-
-        int count = GetFinalProjectileCount();
-        Vector2 origin = spawnHolder.position;
-
-        switch (currentFirePattern)
-        {
-            case FirePattern.Forward:
-                if (count == 1)
-                {
-                    SpawnSingleProjectile(origin, baseDir, targetEnemy);
-                }
-                else
-                {
-                    // Dàn đạn song song (Parallel spacing) tránh bị đè hình khi bắn nhiều đạn về trước
-                    Vector2 normal = new Vector2(-baseDir.y, baseDir.x).normalized;
-                    float spacing = 0.3f * GetFinalAreaScale();
-                    float startOffset = -(count - 1) * spacing / 2f;
-
-                    for (int i = 0; i < count; i++)
-                    {
-                        Vector2 spawnPos = origin + normal * (startOffset + i * spacing);
-                        SpawnSingleProjectile(spawnPos, baseDir, targetEnemy);
-                    }
-                }
-                break;
-
-            case FirePattern.FanSpread:
-                if (count == 1)
-                {
-                    SpawnSingleProjectile(origin, baseDir, targetEnemy);
-                }
-                else
-                {
-                    float totalSpread = (count - 1) * currentSpreadAngle;
-                    float startAngle = -totalSpread / 2f;
-
-                    for (int i = 0; i < count; i++)
-                    {
-                        float currentAngle = startAngle + i * currentSpreadAngle;
-                        Vector2 spreadDir = Quaternion.Euler(0, 0, currentAngle) * baseDir;
-                        SpawnSingleProjectile(origin, spreadDir, targetEnemy);
-                    }
-                }
-                break;
-
-            case FirePattern.Radial360:
-                float step = 360f / count;
-                for (int i = 0; i < count; i++)
-                {
-                    Vector2 radialDir = Quaternion.Euler(0, 0, i * step) * Vector2.right;
-                    SpawnSingleProjectile(origin, radialDir, targetEnemy);
-                }
-                break;
-
-            case FirePattern.Burst:
-                StartCoroutine(BurstRoutine(count, targetEnemy));
-                break;
-
-            case FirePattern.TargetEnemy:
-                SpawnSingleProjectile(origin, baseDir, targetEnemy);
-                break;
-        }
-    }
-
-    private IEnumerator BurstRoutine(int count, Transform targetEnemy)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            Vector2 currentDir = GetAimDirection();
-            SpawnSingleProjectile(spawnHolder.position, currentDir, targetEnemy);
-            yield return new WaitForSeconds(0.08f);
-        }
-    }
-
-    protected virtual GameObject SpawnSingleProjectile(Vector2 spawnPos, Vector2 shootDir, Transform target = null)
-    {
-        GameObject obj = PoolManager.Instance.Spawn(weaponData.projectileKey, spawnPos);
-        if (obj != null)
-        {
-            var proj = obj.GetComponent<Projectile>();
-            if (proj != null)
+            if (_instance == null)
             {
-                proj.InitializeAdvanced(
-                    key: weaponData.projectileKey,
-                    dame: GetFinalDamage(),
-                    speed: GetFinalSpeed(),
-                    dir: shootDir,
-                    motion: currentMotionType,
-                    areaScale: GetFinalAreaScale(),
-                    spinSpeed: currentSpinSpeed,
-                    waveFrequency: currentWaveFrequency,
-                    waveAmplitude: currentWaveAmplitude,
-                    ownerTransform: transform,
-                    target: target,
-                    customLifeTime: GetFinalDuration() > 1f ? GetFinalDuration() : 5f
-                );
+                _instance = FindFirstObjectByType<WeaponController>();
+                if (_instance == null)
+                {
+                    var holder = GameObject.Find("WeaponHolder");
+                    if (holder != null)
+                    {
+                        _instance = holder.AddComponent<WeaponController>();
+                    }
+                    else
+                    {
+                        var player = GameObject.FindWithTag("Player");
+                        if (player != null)
+                        {
+                            _instance = player.AddComponent<WeaponController>();
+                        }
+                        else
+                        {
+                            var go = new GameObject("WeaponController");
+                            _instance = go.AddComponent<WeaponController>();
+                        }
+                    }
+                }
+            }
+            return _instance;
+        }
+        private set => _instance = value;
+    }
+
+    [Header("Weapon Placement")]
+    [SerializeField] private GameObject weaponHolder;
+
+    [Header("Weapon Settings")]
+    [SerializeField] private int maxWeapon = 3;
+
+    [Header("All Weapons In Game")]
+    [SerializeField] private List<GameObject> allWeapons = new();
+
+    [Header("Currently Owned Weapons")]
+    [SerializeField] private List<GameObject> currentWeapons = new();
+
+    public int MaxWeapon => maxWeapon;
+    public IReadOnlyList<GameObject> CurrentWeapons => currentWeapons;
+    public IReadOnlyList<GameObject> AllWeapons => allWeapons;
+
+    private void Awake()
+    {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        _instance = this;
+
+        Initialize();
+    }
+
+    private void Initialize()
+    {
+        if (weaponHolder == null)
+        {
+            var found = GameObject.Find("WeaponHolder");
+            if (found != null)
+            {
+                weaponHolder = found;
+            }
+            else
+            {
+                Transform holder = transform.Find("WeaponHolder");
+                if (holder != null)
+                    weaponHolder = holder.gameObject;
+                else
+                    weaponHolder = gameObject;
             }
         }
-        return obj;
+
+        // Tự động nạp danh sách vũ khí từ WeaponHolder nếu danh sách allWeapons chưa được gán
+        if (allWeapons.Count == 0 && weaponHolder != null)
+        {
+            foreach (Transform child in weaponHolder.transform)
+            {
+                if (child.GetComponent<WeaponBase>() != null || child.GetComponent<IWeaponUI>() != null)
+                {
+                    allWeapons.Add(child.gameObject);
+                }
+            }
+        }
+
+        LoadCurrentWeapon();
     }
 
-    public virtual Sprite GetIconSprite()
+    private void OnEnable()
     {
-        return weaponData != null ? weaponData.GetIcon() : null;
+        EventBus<OnWeaponSelectedEvent>.Subscribe(OnWeaponSelected);
     }
 
-    public virtual string GetWeaponName()
+    private void OnDisable()
     {
-        return weaponData != null ? weaponData.weaponName : gameObject.name;
+        EventBus<OnWeaponSelectedEvent>.Unsubscribe(OnWeaponSelected);
     }
 
-    public virtual string GetNextUpgradeDescription()
+    // ================= EVENT LISTENER =================
+    private void OnWeaponSelected(OnWeaponSelectedEvent evt)
     {
-        return weaponData != null ? weaponData.GetUpgradeDescription(currentLevel + 1) : string.Empty;
+        if (evt.Weapon == null) return;
+
+        if (HasWeapon(evt.Weapon))
+        {
+            UpgradeWeapon(evt.Weapon);
+        }
+        else
+        {
+            AddWeapon(evt.Weapon);
+        }
+    }
+
+    // ================= LOAD CURRENT WEAPONS =================
+    public void LoadCurrentWeapon()
+    {
+        currentWeapons.Clear();
+
+        if (weaponHolder == null) return;
+
+        foreach (Transform child in weaponHolder.transform)
+        {
+            if (child.gameObject.activeSelf)
+            {
+                currentWeapons.Add(child.gameObject);
+            }
+        }
+    }
+
+    // ================= WEAPON INVENTORY API =================
+    public bool HasWeapon(GameObject weapon)
+    {
+        return currentWeapons.Contains(weapon);
+    }
+
+    public bool CanAddWeapon()
+    {
+        return currentWeapons.Count < maxWeapon;
+    }
+
+    public bool IsWeaponMaxLevel(GameObject weapon)
+    {
+        if (weapon == null) return true;
+        var baseWeapon = weapon.GetComponent<WeaponBase>();
+        return baseWeapon != null && baseWeapon.IsMaxLevel;
+    }
+
+    public void AddWeapon(GameObject weapon)
+    {
+        if (!CanAddWeapon()) return;
+
+        if (weaponHolder != null && weapon.transform.parent != weaponHolder.transform)
+        {
+            weapon.transform.SetParent(weaponHolder.transform);
+        }
+
+        weapon.SetActive(true);
+
+        if (!currentWeapons.Contains(weapon))
+        {
+            currentWeapons.Add(weapon);
+        }
+    }
+
+    public void UpgradeWeapon(GameObject weapon)
+    {
+        var baseWeapon = weapon.GetComponent<WeaponBase>();
+        if (baseWeapon != null)
+        {
+            baseWeapon.UpgradeWeapon();
+            return;
+        }
+
+        var weaponUI = weapon.GetComponent<IWeaponUI>();
+        if (weaponUI != null)
+        {
+            weaponUI.UpdateWeaponData(1);
+        }
+    }
+
+    /// <summary>
+    /// Trả về danh sách tất cả các vũ khí có thể xuất hiện trong bảng nâng cấp
+    /// </summary>
+    public List<GameObject> GetAvailableWeaponUpgrades()
+    {
+        if (weaponHolder == null || allWeapons.Count == 0)
+        {
+            Initialize();
+        }
+
+        LoadCurrentWeapon();
+
+        List<GameObject> upgradeableCurrent = currentWeapons
+            .Where(w => !IsWeaponMaxLevel(w))
+            .ToList();
+
+        if (CanAddWeapon())
+        {
+            List<GameObject> unownedWeapons = allWeapons
+                .Where(w => !HasWeapon(w) && !IsWeaponMaxLevel(w))
+                .ToList();
+
+            return unownedWeapons.Concat(upgradeableCurrent).Distinct().ToList();
+        }
+
+        return upgradeableCurrent;
     }
 }

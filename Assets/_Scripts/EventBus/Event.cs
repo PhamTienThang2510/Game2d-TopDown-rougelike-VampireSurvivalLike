@@ -79,3 +79,25 @@ public struct OnSpecialEventTriggered : IEvent
         EventType = eventType;
     }
 }
+
+public struct OnWeaponSelectedEvent : IEvent
+{
+    public GameObject Weapon;
+
+    public OnWeaponSelectedEvent(GameObject weapon)
+    {
+        Weapon = weapon;
+    }
+}
+
+public struct OnPassiveSelectedEvent : IEvent
+{
+    public PassiveItemData Passive;
+
+    public OnPassiveSelectedEvent(PassiveItemData passive)
+    {
+        Passive = passive;
+    }
+}
+
+public struct OnUpgradeCompletedEvent : IEvent { }

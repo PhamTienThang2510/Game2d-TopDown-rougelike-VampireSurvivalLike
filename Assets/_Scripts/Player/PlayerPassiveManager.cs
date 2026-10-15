@@ -47,6 +47,24 @@ public class PlayerPassiveManager : MonoBehaviour
         playerController = GetComponent<PlayerController>();
     }
 
+    private void OnEnable()
+    {
+        EventBus<OnPassiveSelectedEvent>.Subscribe(OnPassiveSelected);
+    }
+
+    private void OnDisable()
+    {
+        EventBus<OnPassiveSelectedEvent>.Unsubscribe(OnPassiveSelected);
+    }
+
+    private void OnPassiveSelected(OnPassiveSelectedEvent evt)
+    {
+        if (evt.Passive != null)
+        {
+            AddOrUpgradePassive(evt.Passive);
+        }
+    }
+
     private void Start()
     {
         if (player == null) player = FindFirstObjectByType<Player>();
@@ -57,6 +75,30 @@ public class PlayerPassiveManager : MonoBehaviour
     private void Update()
     {
         HandleHealthRecovery();
+    }
+
+    /// <summary>
+    /// Lọc danh sách các Passive có thể xuất hiện trong bảng nâng cấp
+    /// </summary>
+    public List<PassiveItemData> GetAvailablePassiveUpgrades(List<PassiveItemData> allPassives)
+    {
+        List<PassiveItemData> available = new();
+        if (allPassives == null) return available;
+
+        bool canAdd = CanAddPassive();
+
+        foreach (var p in allPassives)
+        {
+            if (p == null) continue;
+            if (IsMaxLevel(p)) continue;
+
+            if (HasPassive(p) || canAdd)
+            {
+                available.Add(p);
+            }
+        }
+
+        return available;
     }
 
     /// <summary>

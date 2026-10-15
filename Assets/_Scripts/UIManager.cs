@@ -5,6 +5,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/// <summary>
+/// Quản lý giao diện người dùng (HUD, Pause, Game Over, Bảng nâng cấp khi lên cấp).
+/// Tách biệt hoàn toàn khỏi logic quản lý kho vũ khí (đã chuyển sang WeaponController).
+/// Giao tiếp hoàn toàn thông qua EventBus.
+/// </summary>
 public class UIManager : MonoBehaviour
 {
     public static UIManager instance;
@@ -12,16 +17,9 @@ public class UIManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private Player player;
     [SerializeField] private PlayerExp playerExp;
-    [SerializeField] private GameObject weaponHolder;
-
-    [Header("All Weapons")]
-    [SerializeField] private List<GameObject> allWeapons = new();
 
     [Header("All Passives")]
     [SerializeField] private List<PassiveItemData> allPassives = new();
-
-    [Header("Weapon Settings")]
-    [SerializeField] private int maxWeapon = 3;
 
     [Header("Health UI")]
     [SerializeField] private Slider sliderHealth;
@@ -35,16 +33,15 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject panelGameOver;
     [SerializeField] private GameObject panelUpgrade;
     [SerializeField] private GameObject panelPause;
-    [Header("Upgrade Option UI")]
 
-    [SerializeField]private List<GameObject> currentWeapons = new();
     private bool isPaused;
 
     private void Awake()
     {
         instance = this;
-        panelGameOver.SetActive(false);
-        panelUpgrade.SetActive(false);
+        if (panelGameOver != null) panelGameOver.SetActive(false);
+        if (panelUpgrade != null) panelUpgrade.SetActive(false);
+        if (panelPause != null) panelPause.SetActive(false);
     }
 
     private void OnEnable()
@@ -53,6 +50,7 @@ public class UIManager : MonoBehaviour
         EventBus<OnLevelUpEvent>.Subscribe(OnLevelUp);
         EventBus<OnHealthChangedEvent>.Subscribe(OnHealthChanged);
         EventBus<OnExpChangedEvent>.Subscribe(OnExpChanged);
+        EventBus<OnUpgradeCompletedEvent>.Subscribe(OnUpgradeCompleted);
     }
 
     private void OnDisable()
@@ -61,18 +59,18 @@ public class UIManager : MonoBehaviour
         EventBus<OnLevelUpEvent>.Unsubscribe(OnLevelUp);
         EventBus<OnHealthChangedEvent>.Unsubscribe(OnHealthChanged);
         EventBus<OnExpChangedEvent>.Unsubscribe(OnExpChanged);
+        EventBus<OnUpgradeCompletedEvent>.Unsubscribe(OnUpgradeCompleted);
     }
 
     private void Start()
     {
-        LoadCurrentWeapon();
-
-        // Nếu bắt đầu mà chưa có vũ khí nào, mở giao diện pick (tạm dừng game) để người chơi chọn vũ khí khởi đầu
-        if (currentWeapons.Count == 0)
+        // Nếu người chơi chưa có vũ khí khởi đầu nào, mở bảng chọn vũ khí
+        if (WeaponController.Instance != null && WeaponController.Instance.CurrentWeapons.Count == 0)
         {
             Upgrade();
         }
     }
+
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -80,10 +78,11 @@ public class UIManager : MonoBehaviour
             TogglePause();
         }
     }
+
     public void TogglePause()
     {
-        // Không cho pause khi game over hoặc đang upgrade
-        if (panelGameOver.activeSelf || panelUpgrade.activeSelf)
+        // Không cho pause khi game over hoặc đang trong bảng nâng cấp
+        if ((panelGameOver != null && panelGameOver.activeSelf) || (panelUpgrade != null && panelUpgrade.activeSelf))
             return;
 
         if (isPaused)
@@ -91,18 +90,19 @@ public class UIManager : MonoBehaviour
         else
             PauseGame();
     }
+
     public void PauseGame()
     {
         isPaused = true;
         Time.timeScale = 0f;
-        panelPause.SetActive(true);
+        if (panelPause != null) panelPause.SetActive(true);
     }
 
     public void ResumeGame()
     {
         isPaused = false;
         Time.timeScale = 1f;
-        panelPause.SetActive(false);
+        if (panelPause != null) panelPause.SetActive(false);
     }
 
     // ================= HEALTH =================
@@ -113,8 +113,10 @@ public class UIManager : MonoBehaviour
 
     public void SettingHealthUI(int current, int max)
     {
-        sliderHealth.value = current * 1f / max;
-        textHealthSlider.text = $"{current}/{max}";
+        if (sliderHealth != null)
+            sliderHealth.value = current * 1f / max;
+        if (textHealthSlider != null)
+            textHealthSlider.text = $"{current}/{max}";
     }
 
     // ================= EXP =================
@@ -125,8 +127,10 @@ public class UIManager : MonoBehaviour
 
     public void SettingExpUI(int current, int max)
     {
-        sliderExp.value = current * 1f / max;
-        textExpSlider.text = $"{current}/{max}";
+        if (sliderExp != null)
+            sliderExp.value = current * 1f / max;
+        if (textExpSlider != null)
+            textExpSlider.text = $"{current}/{max}";
     }
 
     // ================= GAME OVER =================
@@ -135,14 +139,9 @@ public class UIManager : MonoBehaviour
         ShowGameOverPanel();
     }
 
-    private void OnLevelUp(OnLevelUpEvent _)
-    {
-        Upgrade();
-    }
-
     private void ShowGameOverPanel()
     {
-        panelGameOver.SetActive(true);
+        if (panelGameOver != null) panelGameOver.SetActive(true);
         Time.timeScale = 0f;
     }
 
@@ -152,19 +151,7 @@ public class UIManager : MonoBehaviour
         SceneManager.LoadScene(1);
     }
 
-    // ================= LOAD CURRENT WEAPON =================
-    private void LoadCurrentWeapon()
-    {
-        currentWeapons.Clear();
-
-        foreach (Transform weapon in weaponHolder.transform)
-        {
-            if (weapon.gameObject.activeSelf)
-                currentWeapons.Add(weapon.gameObject);
-        }
-    }
-
-    // ================= UPGRADE =================
+    // ================= UPGRADE FLOW =================
     private struct UpgradeOptionCandidate
     {
         public bool isWeapon;
@@ -175,57 +162,59 @@ public class UIManager : MonoBehaviour
         public static UpgradeOptionCandidate Passive(PassiveItemData p) => new() { isWeapon = false, passive = p };
     }
 
+    private void OnLevelUp(OnLevelUpEvent _)
+    {
+        Upgrade();
+    }
+
+    private void OnUpgradeCompleted(OnUpgradeCompletedEvent _)
+    {
+        if (panelUpgrade != null)
+            panelUpgrade.SetActive(false);
+
+        Time.timeScale = 1f;
+    }
+
     private void Upgrade()
     {
+        if (panelUpgrade == null) return;
+
         Time.timeScale = 0f;
         panelUpgrade.SetActive(true);
 
-        LoadCurrentWeapon();
-
         List<UpgradeOptionCandidate> candidatePool = new();
 
-        // 1️⃣ THÊM VŨ KHÍ HỢP LỆ VÀO POOL
-        List<GameObject> upgradeableCurrentWeapons = currentWeapons
-            .Where(w => !IsWeaponMaxLevel(w))
-            .ToList();
-
-        if (currentWeapons.Count < maxWeapon)
+        // 1️⃣ Lấy danh sách nâng cấp Vũ khí từ WeaponController
+        if (WeaponController.Instance != null)
         {
-            List<GameObject> unownedWeapons = allWeapons
-                .Where(w => !HasWeapon(w) && !IsWeaponMaxLevel(w))
-                .ToList();
-
-            foreach (var w in unownedWeapons) candidatePool.Add(UpgradeOptionCandidate.Weapon(w));
-            foreach (var w in upgradeableCurrentWeapons) candidatePool.Add(UpgradeOptionCandidate.Weapon(w));
-        }
-        else
-        {
-            foreach (var w in upgradeableCurrentWeapons) candidatePool.Add(UpgradeOptionCandidate.Weapon(w));
-        }
-
-        // 2️⃣ THÊM PASSIVE ITEM HỢP LỆ VÀO POOL (Chỉ xuất hiện khi người chơi đã có ít nhất 1 vũ khí khởi đầu)
-        bool hasStartingWeapon = currentWeapons.Count > 0;
-
-        if (hasStartingWeapon && PlayerPassiveManager.Instance != null && allPassives != null && allPassives.Count > 0)
-        {
-            bool canAddPassive = PlayerPassiveManager.Instance.CanAddPassive();
-
-            foreach (var passive in allPassives)
+            var availableWeapons = WeaponController.Instance.GetAvailableWeaponUpgrades();
+            if (availableWeapons != null)
             {
-                if (passive == null) continue;
-                bool isOwned = PlayerPassiveManager.Instance.HasPassive(passive);
-                bool isMax = PlayerPassiveManager.Instance.IsMaxLevel(passive);
-
-                if (isMax) continue;
-
-                if (isOwned || canAddPassive)
+                foreach (var w in availableWeapons)
                 {
-                    candidatePool.Add(UpgradeOptionCandidate.Passive(passive));
+                    if (w != null)
+                        candidatePool.Add(UpgradeOptionCandidate.Weapon(w));
                 }
             }
         }
 
-        // 3️⃣ NẾU KHÔNG CÒN GÌ ĐỂ NÂNG CẤP
+        // 2️⃣ Lấy danh sách nâng cấp Passive Item từ PlayerPassiveManager
+        // (Chỉ xuất hiện khi người chơi đã có ít nhất 1 vũ khí khởi đầu)
+        bool hasStartingWeapon = WeaponController.Instance != null && WeaponController.Instance.CurrentWeapons.Count > 0;
+        if (hasStartingWeapon && PlayerPassiveManager.Instance != null)
+        {
+            var availablePassives = PlayerPassiveManager.Instance.GetAvailablePassiveUpgrades(allPassives);
+            if (availablePassives != null)
+            {
+                foreach (var p in availablePassives)
+                {
+                    if (p != null)
+                        candidatePool.Add(UpgradeOptionCandidate.Passive(p));
+                }
+            }
+        }
+
+        // 3️⃣ Nếu không còn bất kỳ lựa chọn nào để nâng cấp -> Tự động bỏ qua và tiếp tục game
         if (candidatePool.Count == 0)
         {
             panelUpgrade.SetActive(false);
@@ -233,15 +222,14 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        // 4️⃣ RANDOM VÀ LOẠI TRÙNG
+        // 4️⃣ Random xáo trộn và loại trùng
         var selected = candidatePool
             .Distinct()
             .OrderBy(_ => Random.value)
             .ToList();
 
-        // 5️⃣ GÁN LÊN UI
+        // 5️⃣ Gán lên các ô UpgradeOptionUI
         var optionUIs = panelUpgrade.GetComponentsInChildren<UpgradeOptionUI>(true);
-
         for (int i = 0; i < optionUIs.Length; i++)
         {
             if (i < selected.Count)
@@ -256,72 +244,6 @@ public class UIManager : MonoBehaviour
             {
                 optionUIs[i].gameObject.SetActive(false);
             }
-        }
-    }
-
-    private bool IsWeaponMaxLevel(GameObject weapon)
-    {
-        if (weapon == null) return true;
-        var ctrl = weapon.GetComponent<WeaponController>();
-        return ctrl != null && ctrl.IsMaxLevel;
-    }
-
-    // ================= WEAPON & PASSIVE API =================
-    public bool HasWeapon(GameObject weapon)
-    {
-        return currentWeapons.Contains(weapon);
-    }
-
-    public bool CanAddWeapon()
-    {
-        return currentWeapons.Count < maxWeapon;
-    }
-
-    public void AddWeapon(GameObject weapon)
-    {
-        if (!CanAddWeapon()) return;
-
-        weapon.transform.SetParent(weaponHolder.transform);
-        weapon.SetActive(true);
-
-        currentWeapons.Add(weapon);
-    }
-
-    public void PickWeapon(GameObject weapon)
-    {
-        if (HasWeapon(weapon))
-            UpgradeWeapon(weapon);
-        else
-            AddWeapon(weapon);
-
-        panelUpgrade.SetActive(false);
-        Time.timeScale = 1f;
-    }
-
-    public void PickPassive(PassiveItemData passive)
-    {
-        if (PlayerPassiveManager.Instance != null && passive != null)
-        {
-            PlayerPassiveManager.Instance.AddOrUpgradePassive(passive);
-        }
-
-        panelUpgrade.SetActive(false);
-        Time.timeScale = 1f;
-    }
-
-    public void UpgradeWeapon(GameObject weapon)
-    {
-        var ctrl = weapon.GetComponent<WeaponController>();
-        if (ctrl != null)
-        {
-            ctrl.UpgradeWeapon();
-            return;
-        }
-
-        var weaponUI = weapon.GetComponent<IWeaponUI>();
-        if (weaponUI != null)
-        {
-            weaponUI.UpdateWeaponData(1);
         }
     }
 }

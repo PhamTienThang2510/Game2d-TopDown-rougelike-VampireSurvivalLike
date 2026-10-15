@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ShieldWeaponController : WeaponController, IWeaponUI
+public class ShieldWeaponController : WeaponBase, IWeaponUI
 {
     [SerializeField] private GameObject shieldPrefab;
     [SerializeField] private float baseDamageInterval = 0.5f;
