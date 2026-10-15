@@ -8,40 +8,7 @@ using UnityEngine;
 /// </summary>
 public class WeaponController : MonoBehaviour
 {
-    private static WeaponController _instance;
-    public static WeaponController Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<WeaponController>();
-                if (_instance == null)
-                {
-                    var holder = GameObject.Find("WeaponHolder");
-                    if (holder != null)
-                    {
-                        _instance = holder.AddComponent<WeaponController>();
-                    }
-                    else
-                    {
-                        var player = GameObject.FindWithTag("Player");
-                        if (player != null)
-                        {
-                            _instance = player.AddComponent<WeaponController>();
-                        }
-                        else
-                        {
-                            var go = new GameObject("WeaponController");
-                            _instance = go.AddComponent<WeaponController>();
-                        }
-                    }
-                }
-            }
-            return _instance;
-        }
-        private set => _instance = value;
-    }
+    public static WeaponController Instance;
 
     [Header("Weapon Placement")]
     [SerializeField] private GameObject weaponHolder;
@@ -61,12 +28,12 @@ public class WeaponController : MonoBehaviour
 
     private void Awake()
     {
-        if (_instance != null && _instance != this)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
-        _instance = this;
+        Instance = this;
 
         Initialize();
     }
@@ -75,19 +42,7 @@ public class WeaponController : MonoBehaviour
     {
         if (weaponHolder == null)
         {
-            var found = GameObject.Find("WeaponHolder");
-            if (found != null)
-            {
-                weaponHolder = found;
-            }
-            else
-            {
-                Transform holder = transform.Find("WeaponHolder");
-                if (holder != null)
-                    weaponHolder = holder.gameObject;
-                else
-                    weaponHolder = gameObject;
-            }
+            Debug.LogWarning("WeaponController: WeaponHolder is not assigned. Please assign a GameObject to hold the weapons.");
         }
 
         // Tự động nạp danh sách vũ khí từ WeaponHolder nếu danh sách allWeapons chưa được gán
